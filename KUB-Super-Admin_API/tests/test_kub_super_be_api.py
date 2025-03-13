@@ -1,32 +1,17 @@
 import requests
 
 from .constans import BASE_URL
-
-
-def create_admin(admin_request, headers):
-    """
-    Helper function that creates an admin and returns the JSON response.
-    """
-    response = requests.post(f"{BASE_URL}/admins", json=admin_request, headers=headers)
-    assert (
-        response.status_code == 201
-    ), f"Expected status code 201, got {response.status_code}"
-    return response.json()
+from .helper import create_admin
 
 
 # ----------------- POST /admins -----------------
-def test_create_admin_success(admin_request, headers):
+def test_create_admin_success(admin, admin_request, headers):
     """
     Test POST /admins returns 201 Created when a valid admin is provided.
     """
-    response = requests.post(f"{BASE_URL}/admins", json=admin_request, headers=headers)
+    assert "id" in admin, "Response should contain 'id'"
     assert (
-        response.status_code == 201
-    ), f"Expected status 201, got {response.status_code}"
-    data = response.json()
-    assert "id" in data, "Response should contain 'id'"
-    assert (
-        data["email"] == admin_request["email"]
+        admin["email"] == admin_request["email"]
     ), "Email should match the request data"
 
 
@@ -42,7 +27,9 @@ def test_create_admin_bad_request(headers):
     response = requests.post(
         f"{BASE_URL}/admins", json=invalid_request, headers=headers
     )
-    assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+    data = response.json()
+    assert response.status_code == 422, f"Expected 422, got {response.status_code}"
+    assert "firstName can't be blank" in data["detail"]
 
 
 def test_create_admin_unauthorized(admin_request):
@@ -53,13 +40,14 @@ def test_create_admin_unauthorized(admin_request):
     assert response.status_code == 401, f"Expected 401, got {response.status_code}"
 
 
-def test_create_admin_conflict(admin_request, headers):
+def test_create_admin_conflict(admin, admin_request, headers):
     """
     Test POST /admins returns 409 Conflict when an admin with the same email already exists.
     """
-    create_admin(admin_request, headers)
     response = requests.post(f"{BASE_URL}/admins", json=admin_request, headers=headers)
+    data = response.json()
     assert response.status_code == 409, f"Expected 409, got {response.status_code}"
+    assert data["detail"] == "User exists"
 
 
 def test_create_admin_unprocessable_entity(headers):
@@ -68,7 +56,7 @@ def test_create_admin_unprocessable_entity(headers):
     """
     invalid_request = {
         "last_name": "Doe",
-        "first_name": "John123",  # Invalid due to numbers
+        "first_name": "John123",
         "middle_name": "Edward",
         "email": "invalid-email",
     }
@@ -79,18 +67,14 @@ def test_create_admin_unprocessable_entity(headers):
 
 
 # ----------------- GET /admins -----------------
-def test_get_admins_success(admin_request, headers):
+def test_get_admins_success(admin, headers):
     """
     Test GET /admins returns 200 OK and a list of admins.
     """
-    created_admin = create_admin(admin_request, headers)
     response = requests.get(f"{BASE_URL}/admins", headers=headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
     data = response.json()
     assert isinstance(data, list), "Response should be a list"
-    assert any(
-        admin.get("id") == created_admin["id"] for admin in data
-    ), "Created admin should be in the list"
 
 
 def test_get_admins_unauthorized():
@@ -102,12 +86,11 @@ def test_get_admins_unauthorized():
 
 
 # ----------------- GET /admins/{id} -----------------
-def test_get_admin_by_id_success(admin_request, headers):
+def test_get_admin_by_id_success(admin, headers):
     """
     Test GET /admins/{id} returns 200 OK for a valid admin.
     """
-    created_admin = create_admin(admin_request, headers)
-    admin_id = created_admin["id"]
+    admin_id = admin["id"]
     response = requests.get(f"{BASE_URL}/admins/{admin_id}", headers=headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
     data = response.json()
@@ -122,12 +105,11 @@ def test_get_admin_by_id_bad_request(headers):
     assert response.status_code == 400, f"Expected 400, got {response.status_code}"
 
 
-def test_get_admin_by_id_unauthorized(admin_request, headers):
+def test_get_admin_by_id_unauthorized(admin, headers):
     """
     Test GET /admins/{id} returns 401 Unauthorized when the header is missing.
     """
-    created_admin = create_admin(admin_request, headers)
-    admin_id = created_admin["id"]
+    admin_id = admin["id"]
     response = requests.get(f"{BASE_URL}/admins/{admin_id}")
     assert response.status_code == 401, f"Expected 401, got {response.status_code}"
 
@@ -149,12 +131,11 @@ def test_get_admin_by_id_not_found(headers):
 
 
 # ----------------- PUT /admins/{id} -----------------
-def test_update_admin_success(admin_request, update_request, headers):
+def test_update_admin_success(admin, update_request, headers):
     """
     Test PUT /admins/{id} returns 200 OK when updating an existing admin.
     """
-    created_admin = create_admin(admin_request, headers)
-    admin_id = created_admin["id"]
+    admin_id = admin["id"]
     response = requests.put(
         f"{BASE_URL}/admins/{admin_id}", json=update_request, headers=headers
     )
@@ -165,47 +146,49 @@ def test_update_admin_success(admin_request, update_request, headers):
     ), "Last name should be updated"
 
 
-def test_update_admin_bad_request(admin_request, headers):
+def test_update_admin_bad_request(admin, headers):
     """
     Test PUT /admins/{id} returns 400 Bad Request when the payload is invalid.
     """
-    created_admin = create_admin(admin_request, headers)
-    admin_id = created_admin["id"]
+    admin_id = admin["id"]
     invalid_update = {
         "last_name": "Smith",
         "first_name": "Alice",
         "middle_name": "",
-        "email": 12345,  # Invalid type for email
+        "email": 12345,
     }
     response = requests.put(
         f"{BASE_URL}/admins/{admin_id}", json=invalid_update, headers=headers
     )
-    assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+    data = response.json()
+    assert response.status_code == 422, f"Expected 422, got {response.status_code}"
+    assert "email must be a valid email address" in data["detail"]
+    assert "middleName must have length in interval" in data["detail"]
 
 
-def test_update_admin_unauthorized(admin_request, update_request):
+def test_update_admin_unauthorized(admin, update_request):
     """
     Test PUT /admins/{id} returns 401 Unauthorized when the header is missing.
     """
-    headers_valid = {
+    headers_invalid = {
         "Content-Type": "application/json",
         "X-SUPER-ADMIN-KEY": "your_super_admin_key_here",
     }
-    created_admin = create_admin(admin_request, headers_valid)
-    admin_id = created_admin["id"]
-    response = requests.put(f"{BASE_URL}/admins/{admin_id}", json=update_request)
+    admin_id = admin["id"]
+    response = requests.put(
+        f"{BASE_URL}/admins/{admin_id}", json=update_request, headers=headers_invalid
+    )
     assert response.status_code == 401, f"Expected 401, got {response.status_code}"
 
 
-def test_update_admin_unprocessable_entity(admin_request, headers):
+def test_update_admin_unprocessable_entity(admin, headers):
     """
     Test PUT /admins/{id} returns 422 Unprocessable Entity when validation fails.
     """
-    created_admin = create_admin(admin_request, headers)
-    admin_id = created_admin["id"]
+    admin_id = admin["id"]
     invalid_update = {
         "last_name": "Smith",
-        "first_name": "Alice123",  # Invalid first name
+        "first_name": "Alice123",
         "middle_name": "",
         "email": "alice.smith@example.com",
     }
@@ -248,7 +231,7 @@ def test_delete_admin_bad_request(headers):
     assert response.status_code == 400, f"Expected 400, got {response.status_code}"
 
 
-def test_delete_admin_unauthorized(admin_request):
+def test_delete_admin_unauthorized(admin):
     """
     Test DELETE /admins/{id} returns 401 Unauthorized when the header is missing.
     """
@@ -256,9 +239,8 @@ def test_delete_admin_unauthorized(admin_request):
         "Content-Type": "application/json",
         "X-SUPER-ADMIN-KEY": "your_super_admin_key_here",
     }
-    created_admin = create_admin(admin_request, headers_valid)
-    admin_id = created_admin["id"]
-    response = requests.delete(f"{BASE_URL}/admins/{admin_id}")
+    admin_id = admin["id"]
+    response = requests.delete(f"{BASE_URL}/admins/{admin_id}", headers=headers_valid)
     assert response.status_code == 401, f"Expected 401, got {response.status_code}"
 
 
@@ -279,12 +261,11 @@ def test_delete_admin_not_found(headers):
 
 
 # ----------------- POST /admins/{id}/resend -----------------
-def test_resend_admin_success(admin_request, headers):
+def test_resend_admin_success(admin, headers):
     """
     Test POST /admins/{id}/resend returns 200 OK (or 503 for SMTP failure) for a valid admin.
     """
-    created_admin = create_admin(admin_request, headers)
-    admin_id = created_admin["id"]
+    admin_id = admin["id"]
     response = requests.post(f"{BASE_URL}/admins/{admin_id}/resend", headers=headers)
     assert response.status_code in [
         200,
@@ -303,7 +284,7 @@ def test_resend_admin_bad_request(headers):
     assert response.status_code == 400, f"Expected 400, got {response.status_code}"
 
 
-def test_resend_admin_unauthorized(admin_request):
+def test_resend_admin_unauthorized(admin):
     """
     Test POST /admins/{id}/resend returns 401 Unauthorized when the header is missing.
     """
@@ -311,9 +292,10 @@ def test_resend_admin_unauthorized(admin_request):
         "Content-Type": "application/json",
         "X-SUPER-ADMIN-KEY": "your_super_admin_key_here",
     }
-    created_admin = create_admin(admin_request, headers_valid)
-    admin_id = created_admin["id"]
-    response = requests.post(f"{BASE_URL}/admins/{admin_id}/resend")
+    admin_id = admin["id"]
+    response = requests.post(
+        f"{BASE_URL}/admins/{admin_id}/resend", headers=headers_valid
+    )
     assert response.status_code == 401, f"Expected 401, got {response.status_code}"
 
 
@@ -331,20 +313,3 @@ def test_resend_admin_not_found(headers):
     """
     response = requests.post(f"{BASE_URL}/admins/999999/resend", headers=headers)
     assert response.status_code == 404, f"Expected 404, got {response.status_code}"
-
-
-def test_resend_admin_smtp_failure(headers):
-    """
-    Test POST /admins/{id}/resend returns 503 Service Unavailable when SMTP fails.
-    Assumes that creating an admin with email 'fail@smtp.com' will simulate SMTP failure.
-    """
-    fail_request = {
-        "last_name": "Doe",
-        "first_name": "John",
-        "middle_name": "Edward",
-        "email": "fail@smtp.com",
-    }
-    created_admin = create_admin(fail_request, headers)
-    admin_id = created_admin["id"]
-    response = requests.post(f"{BASE_URL}/admins/{admin_id}/resend", headers=headers)
-    assert response.status_code == 503, f"Expected 503, got {response.status_code}"

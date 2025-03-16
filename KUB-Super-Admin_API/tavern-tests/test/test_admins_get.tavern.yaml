@@ -1,0 +1,12 @@
+test_name: GET Admins Test
+
+stages:
+  - name: get admins
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+    response:
+      status_code: 200

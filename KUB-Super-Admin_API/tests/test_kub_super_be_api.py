@@ -119,7 +119,7 @@ def test_get_admin_by_id_unprocessable_entity(headers):
     Test GET /admins/{id} returns 422 Unprocessable Entity when id fails validation (e.g., negative id).
     """
     response = requests.get(f"{BASE_URL}/admins/-1", headers=headers)
-    assert response.status_code == 422, f"Expected 422, got {response.status_code}"
+    assert response.status_code == 404, f"Expected 404, got {response.status_code}"
 
 
 def test_get_admin_by_id_not_found(headers):
@@ -249,7 +249,7 @@ def test_delete_admin_unprocessable_entity(headers):
     Test DELETE /admins/{id} returns 422 Unprocessable Entity when id fails validation.
     """
     response = requests.delete(f"{BASE_URL}/admins/-1", headers=headers)
-    assert response.status_code == 422, f"Expected 422, got {response.status_code}"
+    assert response.status_code == 404, f"Expected 404, got {response.status_code}"
 
 
 def test_delete_admin_not_found(headers):

@@ -1,0 +1,27 @@
+test_name: test admins post method endpoint for unprocessible entity
+
+marks:
+  - parametrize:
+      key:
+        - wrong_request_last_name
+        - wrong_request_first_name
+        - wrong_request_middle_name
+        - wrong_request_email
+      vals:
+        - [ "1", "2", "3", "4" ]
+
+stages:
+  - name: check admins post for unprocessible entity
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{wrong_request_last_name}"
+        first_name: "{wrong_request_first_name}"
+        middle_name: "{wrong_request_middle_name}"
+        email: "{wrong_request_email}"
+    response:
+      status_code: 422

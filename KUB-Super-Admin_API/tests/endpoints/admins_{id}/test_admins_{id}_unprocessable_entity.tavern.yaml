@@ -1,0 +1,97 @@
+test_name: test admins/{id} endpoint put method for unprocessible entity via wrong id
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [-1, "Doe", "John", "Edward", "john.doe@example.com"]
+
+stages:
+  - name: check admin put for unprocessible entity via wrong id
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins/{wrong_id}"
+      method: PUT
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        content: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 422
+
+---
+
+test_name: test admins/{id} endpoint put method for unprocessible entity via invalid request data
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - wrong_request_last_name
+        - wrong_request_first_name
+        - wrong_request_middle_name
+        - wrong_request_email
+      vals:
+        - ["Doe", "John", "Edward", "john.doe@example.com", "1", "2", "3", "4"]
+
+stages:
+  - name: create admin
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        user_id: !anyint
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+        status: !anystr
+      save:
+        json:
+          returned_id: id
+
+  - name: check admin put for bad request via invalid request data
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
+      method: PUT
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        content: "application/json"
+      json:
+        last_name: "{wrong_request_last_name}"
+        first_name: "{wrong_request_first_name}"
+        middle_name: "{wrong_request_middle_name}"
+        email: "{wrong_request_email}"
+    response:
+      status_code: 422
+
+  - name: delete created admin
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
+      method: DELETE
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 204

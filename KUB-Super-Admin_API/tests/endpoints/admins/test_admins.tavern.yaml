@@ -1,0 +1,96 @@
+test_name: GET Admins Test
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - name: create admin
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        user_id: !anyint
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+        status: !anystr
+      save:
+        json:
+          returned_id: id
+
+  - name: get admins
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: tavern.helpers:validate_pykwalify
+        extra_kwargs:
+          schema:
+            type: seq
+            required: True
+            matching: "all"
+            sequence:
+              - type: map
+                mapping:
+                  id:
+                    type: int
+                    required: True
+                  user_id:
+                    type: int
+                    required: True
+                  last_name:
+                    type: str
+                    required: True
+                  first_name:
+                    type: str
+                    required: True
+                  middle_name:
+                    type: str
+                    required: True
+                  email:
+                    type: str
+                    required: True
+                  status:
+                    type: str
+                    required: True
+
+  - name: delete admin
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
+      method: DELETE
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 204
+
+  - name: check if created admin really doesn't exist
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404

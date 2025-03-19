@@ -1,0 +1,18 @@
+test_name: test admins/{id} endpoint for bad request
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - ["agadg"]
+
+stages:
+  - name: check admins/id post for bad request
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins/{wrong_id}"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 400

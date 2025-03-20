@@ -87,6 +87,7 @@ stages:
     response:
       status_code: 422
 
+finally:
   - name: delete created admin
     request:
       url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"

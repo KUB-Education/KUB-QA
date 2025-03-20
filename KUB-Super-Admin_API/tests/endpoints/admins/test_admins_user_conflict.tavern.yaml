@@ -52,6 +52,7 @@ stages:
     response:
       status_code: 409
 
+finally:
   - name: delete admin
     request:
       url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"

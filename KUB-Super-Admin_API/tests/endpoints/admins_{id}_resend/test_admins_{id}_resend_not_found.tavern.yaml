@@ -37,6 +37,7 @@ stages:
         json:
           returned_id: id
 
+finally:
   - name: delete admin
     request:
       url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"

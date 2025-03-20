@@ -1,0 +1,271 @@
+test_name: GET Admins Test
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - name: create admin
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        user_id: !anyint
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+        status: !anystr
+      save:
+        json:
+          returned_id: id
+
+  - name: get admins
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: tavern.helpers:validate_pykwalify
+        extra_kwargs:
+          schema:
+            type: seq
+            required: True
+            matching: "all"
+            sequence:
+              - type: map
+                mapping:
+                  id:
+                    type: int
+                    required: True
+                  user_id:
+                    type: int
+                    required: True
+                  last_name:
+                    type: str
+                    required: True
+                  first_name:
+                    type: str
+                    required: True
+                  middle_name:
+                    type: str
+                    required: True
+                  email:
+                    type: str
+                    required: True
+                  status:
+                    type: str
+                    required: True
+
+finally:
+  - name: delete admin
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
+      method: DELETE
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 204
+
+  - name: check if created admin really doesn't exist
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: test admins endpoint for bad request
+
+stages:
+  - name: check admins post for bad request
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+        json:
+          []
+    response:
+      status_code: 400
+
+---
+
+test_name: test admins endpoint post method for wrong autorization header
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "satsgag", "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - name: check admins post for wrong autorization header
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{wrong_token}"
+        Content-Type: "application/json"
+        json:
+          last_name: "{request_last_name}"
+          first_name: "{request_first_name}"
+          middle_name: "{request_middle_name}"
+          email: "{request_email}"
+    response:
+      status_code: 401
+
+---
+
+test_name: test admins endpoint get method for wrong autorization header
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+      vals:
+        - ["satsgag"]
+
+stages:
+  - name: check admins get for wrong autorization header
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{wrong_token}"
+    response:
+      status_code: 401
+
+---
+
+test_name: test admins post method endpoint for unprocessible entity
+
+marks:
+  - parametrize:
+      key:
+        - wrong_request_last_name
+        - wrong_request_first_name
+        - wrong_request_middle_name
+        - wrong_request_email
+      vals:
+        - [ "1", "2", "3", "4" ]
+
+stages:
+  - name: check admins post for unprocessible entity
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{wrong_request_last_name}"
+        first_name: "{wrong_request_first_name}"
+        middle_name: "{wrong_request_middle_name}"
+        email: "{wrong_request_email}"
+    response:
+      status_code: 422
+
+---
+
+test_name: GET Admins Test
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - name: create admin
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        user_id: !anyint
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+        status: !anystr
+      save:
+        json:
+          returned_id: id
+
+  - name: repeat admin creation with same data
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 409
+
+finally:
+  - name: delete admin
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
+      method: DELETE
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 204
+
+  - name: check if created admin really doesn't exist
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404

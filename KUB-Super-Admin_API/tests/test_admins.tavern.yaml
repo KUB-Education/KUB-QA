@@ -1,4 +1,4 @@
-test_name: GET Admins Test
+test_name: test all methods of admins endpoint for positive cases
 
 marks:
   - parametrize:
@@ -98,7 +98,7 @@ finally:
 
 ---
 
-test_name: test admins endpoint for bad request
+test_name: test admins endpoint for bad request error
 
 stages:
   - name: check admins post for bad request
@@ -115,7 +115,7 @@ stages:
 
 ---
 
-test_name: test admins endpoint post method for wrong autorization header
+test_name: test admins endpoint post method for autorization error
 
 marks:
   - parametrize:
@@ -146,7 +146,7 @@ stages:
 
 ---
 
-test_name: test admins endpoint get method for wrong autorization header
+test_name: test admins endpoint get method for autorization error
 
 marks:
   - parametrize:
@@ -156,7 +156,7 @@ marks:
         - ["satsgag"]
 
 stages:
-  - name: check admins get for wrong autorization header
+  - name: check admins get for autorization error
     request:
       url: "https://stage.superadmin.api.kub.education/admins"
       method: GET
@@ -167,7 +167,7 @@ stages:
 
 ---
 
-test_name: test admins post method endpoint for unprocessible entity
+test_name: test admins post method endpoint for unprocessible entity error
 
 marks:
   - parametrize:
@@ -180,7 +180,7 @@ marks:
         - [ "1", "2", "3", "4" ]
 
 stages:
-  - name: check admins post for unprocessible entity
+  - name: check admins post for unprocessible entity error
     request:
       url: "https://stage.superadmin.api.kub.education/admins"
       method: POST
@@ -197,7 +197,7 @@ stages:
 
 ---
 
-test_name: GET Admins Test
+test_name: test admins post method endpoint for user conflict error
 
 marks:
   - parametrize:

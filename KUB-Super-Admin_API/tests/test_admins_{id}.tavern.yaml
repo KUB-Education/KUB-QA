@@ -1,4 +1,4 @@
-test_name: GET Admin Test
+test_name: test all methods of admins/{id} endpoint for positive cases
 
 marks:
   - parametrize:
@@ -125,7 +125,7 @@ finally:
 
 ---
 
-test_name: test admins/{id} endpoint for bad request
+test_name: test admins/{id} endpoint for bad request error
 
 marks:
   - parametrize:
@@ -135,7 +135,7 @@ marks:
         - ["agadg"]
 
 stages:
-  - name: check admins/id post for bad request
+  - name: check admins/id post for bad request error
     request:
       url: "https://stage.superadmin.api.kub.education/admins/{wrong_id}"
       method: GET
@@ -230,7 +230,7 @@ finally:
 
 ---
 
-test_name: test admins/{id} endpoint put method for unprocessible entity via wrong id
+test_name: test admins/{id} endpoint put method for unprocessible entity error via wrong id
 
 marks:
   - parametrize:
@@ -244,7 +244,7 @@ marks:
         - [-1, "Doe", "John", "Edward", "john.doe@example.com"]
 
 stages:
-  - name: check admin put for unprocessible entity via wrong id
+  - name: check admin put for unprocessible entity error via wrong id
     request:
       url: "https://stage.superadmin.api.kub.education/admins/{wrong_id}"
       method: PUT
@@ -261,7 +261,7 @@ stages:
 
 ---
 
-test_name: test admins/{id} endpoint put method for unprocessible entity via invalid request data
+test_name: test admins/{id} endpoint put method for unprocessible entity error via invalid request data
 
 marks:
   - parametrize:
@@ -304,7 +304,7 @@ stages:
         json:
           returned_id: id
 
-  - name: check admin put for bad request via invalid request data
+  - name: check admin put for unprocessible entity error via invalid request data
     request:
       url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
       method: PUT

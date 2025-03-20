@@ -1,4 +1,4 @@
-test_name: GET Admins Test
+test_name: test all methods of admins/{id}/resend endpoint for positive cases
 
 marks:
   - parametrize:
@@ -75,7 +75,7 @@ finally:
 
 ---
 
-test_name: test admins/{id}/resend endpoint for bad request
+test_name: test admins/{id}/resend endpoint for bad request error
 
 marks:
   - parametrize:
@@ -85,7 +85,7 @@ marks:
         - ["agadg"]
 
 stages:
-  - name: check admins/id/resend post for bad request
+  - name: check admins/id/resend post for bad request error
     request:
       url: "https://stage.superadmin.api.kub.education/admins/{wrong_id}/resend"
       method: GET
@@ -156,7 +156,7 @@ finally:
 
 ---
 
-test_name: test admins/{id}/resend endpoint for wrong autorization header
+test_name: test admins/{id}/resend endpoint for autorization error
 
 marks:
   - parametrize:
@@ -196,7 +196,7 @@ stages:
         json:
           returned_id: id
 
-  - name: check admin resend post for wrong autorization header
+  - name: check admin resend post for autorization error
     request:
       url: "https://stage.superadmin.api.kub.education/admins/{returned_id}/resend"
       method: POST
@@ -226,7 +226,7 @@ finally:
 
 ---
 
-test_name: test admins/{id}/resend endpoint for unprocessible entity
+test_name: test admins/{id}/resend endpoint for unprocessible entity error
 
 marks:
   - parametrize:
@@ -236,7 +236,7 @@ marks:
         - [-1]
 
 stages:
-  - name: check admin resend post for unprocessible entity
+  - name: check admin resend post for unprocessible entity error
     request:
       url: "https://stage.superadmin.api.kub.education/admins/{wrong_id}/resend"
       method: POST

@@ -3,8 +3,6 @@ import os
 import pytest
 from dotenv import load_dotenv
 
-from .helper import create_admin, remove_admin
-
 load_dotenv()
 
 
@@ -34,11 +32,3 @@ def update_request():
         "middle_name": "",
         "email": "NewUserEmail@example.com",
     }
-
-
-@pytest.fixture
-def admin(headers, admin_request):
-    admin_data = create_admin(admin_request, headers)
-    admin_id = admin_data["id"]
-    yield admin_data
-    remove_admin(headers, admin_id)

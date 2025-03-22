@@ -47,8 +47,10 @@ stages:
       status_code: 200
       verify_response_with:
         function: tavern.helpers:validate_pykwalify
+          #Check response for valid schema according to openapi spec
+          #validate_pykwalify used to validate more complicated JSON schemas
         extra_kwargs:
-          schema:
+          schema:І
             type: seq
             required: True
             matching: "all"

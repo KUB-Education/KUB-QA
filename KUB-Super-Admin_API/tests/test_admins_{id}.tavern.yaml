@@ -189,8 +189,9 @@ marks:
         - request_first_name
         - request_middle_name
         - request_email
+        - wrong_id
       vals:
-        - [ "Doe", "John", "Edward", "john.doe@example.com" ]
+        - [ "Doe", "John", "Edward", "john.doe@example.com", -1 ]
 
 stages:
   - name: create test admin
@@ -241,6 +242,21 @@ finally:
   - name: check admin/id put for not found error
     request:
       url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
+      method: PUT
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        content: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 404
+
+  - name: check admin put for not found error via wrong id
+    request:
+      url: "https://stage.superadmin.api.kub.education/admins/{wrong_id}"
       method: PUT
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
@@ -355,37 +371,6 @@ finally:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
     response:
       status_code: 404
-
----
-
-test_name: test admins/{id} endpoint put method for unprocessible entity error via wrong id
-
-marks:
-  - parametrize:
-      key:
-        - wrong_id
-        - request_last_name
-        - request_first_name
-        - request_middle_name
-        - request_email
-      vals:
-        - [-1, "Doe", "John", "Edward", "john.doe@example.com"]
-
-stages:
-  - name: check admin put for unprocessible entity error via wrong id
-    request:
-      url: "https://stage.superadmin.api.kub.education/admins/{wrong_id}"
-      method: PUT
-      headers:
-        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
-        content: "application/json"
-      json:
-        last_name: "{request_last_name}"
-        first_name: "{request_first_name}"
-        middle_name: "{request_middle_name}"
-        email: "{request_email}"
-    response:
-      status_code: 422
 
 ---
 

@@ -13,7 +13,7 @@ marks:
 stages:
   - name: create admin
     request:
-      url: "https://stage.superadmin.api.kub.education/admins"
+      url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
@@ -39,7 +39,7 @@ stages:
 
   - name: get admins
     request:
-      url: "https://stage.superadmin.api.kub.education/admins"
+      url: "{tavern.env_vars.BASE_URL}/admins"
       method: GET
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
@@ -82,7 +82,7 @@ stages:
 finally:
   - name: delete admin
     request:
-      url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
@@ -91,7 +91,7 @@ finally:
 
   - name: check if created admin really doesn't exist
     request:
-      url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
@@ -105,7 +105,7 @@ test_name: test admins endpoint for bad request error
 stages:
   - name: check admins post for bad request
     request:
-      url: "https://stage.superadmin.api.kub.education/admins"
+      url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
@@ -133,7 +133,7 @@ marks:
 stages:
   - name: check admins post for wrong autorization header
     request:
-      url: "https://stage.superadmin.api.kub.education/admins"
+      url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
       headers:
         X-SUPER-ADMIN-KEY: "{wrong_token}"
@@ -160,7 +160,7 @@ marks:
 stages:
   - name: check admins get for autorization error
     request:
-      url: "https://stage.superadmin.api.kub.education/admins"
+      url: "{tavern.env_vars.BASE_URL}/admins"
       method: GET
       headers:
         X-SUPER-ADMIN-KEY: "{wrong_token}"
@@ -184,7 +184,7 @@ marks:
 stages:
   - name: check admins post for unprocessible entity error
     request:
-      url: "https://stage.superadmin.api.kub.education/admins"
+      url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
@@ -214,7 +214,7 @@ marks:
 stages:
   - name: create admin
     request:
-      url: "https://stage.superadmin.api.kub.education/admins"
+      url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
@@ -240,7 +240,7 @@ stages:
 
   - name: repeat admin creation with same data
     request:
-      url: "https://stage.superadmin.api.kub.education/admins"
+      url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
@@ -256,7 +256,7 @@ stages:
 finally:
   - name: delete admin
     request:
-      url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
@@ -265,7 +265,7 @@ finally:
 
   - name: check if created admin really doesn't exist
     request:
-      url: "https://stage.superadmin.api.kub.education/admins/{returned_id}"
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"

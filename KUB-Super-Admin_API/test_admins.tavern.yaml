@@ -1,6 +1,10 @@
 test_name: Test methods for positive cases and data coherency
 
 marks:
+  - usefixtures:
+      - admin_setup_description
+      - admin_cleanup_description
+      - admin_cleanup_check_description
   - parametrize:
       key:
         - request_last_name
@@ -11,8 +15,8 @@ marks:
         - [ "Doe", "John", "Edward", "john.doe@example.com" ]
 
 stages:
-  - name: "When a request with a valid json body,
-            POST /admins returns 201 and a json body that matches the request"
+  - &create_admin
+    name: "{admin_setup_description}"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
@@ -81,7 +85,8 @@ stages:
                     required: True
 
 finally:
-  - name: "When admin exists, DELETE /admins returns 204"
+  - &delete_admin
+    name: "{admin_cleanup_description}"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE
@@ -90,7 +95,8 @@ finally:
     response:
       status_code: 204
 
-  - name: "When admin deleted, GET /admins returns 404"
+  - &delete_admin_check
+    name: "admin_cleanup_check_description"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET
@@ -123,7 +129,7 @@ marks:
       key:
         - wrong_token
       vals:
-        - [ "satsgag", "Doe", "John", "Edward", "john.doe@example.com" ]
+        - [ "satsgag" ]
 
 stages:
   - name: "When request with invalid security key header, GET /admins returns 401"
@@ -201,6 +207,10 @@ stages:
 test_name: Test POST method for User Conflict error
 
 marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
   - parametrize:
       key:
         - request_last_name
@@ -211,32 +221,7 @@ marks:
         - [ "Doe", "John", "Edward", "john.doe@example.com" ]
 
 stages:
-  - name: "When a request with a valid json body,
-            POST /admins returns 201 and a json body that matches the request"
-    request:
-      url: "{tavern.env_vars.BASE_URL}/admins"
-      method: POST
-      headers:
-        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
-        Content-Type: "application/json"
-      json:
-        last_name: "{request_last_name}"
-        first_name: "{request_first_name}"
-        middle_name: "{request_middle_name}"
-        email: "{request_email}"
-    response:
-      status_code: 201
-      json:
-        id: !anyint
-        user_id: !anyint
-        last_name: "{request_last_name}"
-        first_name: "{request_first_name}"
-        middle_name: "{request_middle_name}"
-        email: "{request_email}"
-        status: !anystr
-      save:
-        json:
-          returned_id: id
+  - *create_admin
 
   - name: "When request with json body that data match another user data, POST admin returns 409"
     request:
@@ -254,20 +239,6 @@ stages:
       status_code: 409
 
 finally:
-  - name: "When admin exists, DELETE /admins returns 204"
-    request:
-      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
-      method: DELETE
-      headers:
-        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
-    response:
-      status_code: 204
+  - *delete_admin
 
-  - name: "When admin deleted, GET /admins returns 404"
-    request:
-      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
-      method: GET
-      headers:
-        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
-    response:
-      status_code: 404
+  - *delete_admin_check

@@ -1,4 +1,4 @@
-test_name: Test methods for positive cases and data coherency
+test_name: Test POST method for positive case and data coherency
 
 marks:
   - usefixtures:
@@ -11,12 +11,8 @@ marks:
         - request_first_name
         - request_middle_name
         - request_email
-        - update_last_name
-        - update_first_name
-        - update_middle_name
-        - update_email
       vals:
-        - ["Doe", "John", "Edward", "john.doe@example.com", "Smith", "Alice", "Bob", "alice.smith@example.com"]
+        - ["Doe", "John", "Edward", "john.doe@example.com"]
 
 stages:
   - &create_admin_save_all
@@ -70,6 +66,52 @@ stages:
         email: "{returned_email}"
         status: "{returned_status}"
 
+finally:
+  - &delete_admin
+    name: "{admin_cleanup_description}"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: DELETE
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 204
+
+  - &delete_admin_check
+    name:  "{admin_cleanup_check_description}"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: Test PUT method for positive case and data coherency
+
+marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - update_last_name
+        - update_first_name
+        - update_middle_name
+        - update_email
+      vals:
+        - ["Doe", "John", "Edward", "john.doe@example.com", "Smith", "Alice", "Bob", "alice.smith@example.com"]
+
+stages:
+  - *create_admin_save_all
+
   - name: "When a request with a valid json body,
             PUT returns 200 and a json body that matches request"
     request:
@@ -113,25 +155,9 @@ stages:
         status: !anystr
 
 finally:
-  - &delete_admin
-    name: "{admin_cleanup_description}"
-    request:
-      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
-      method: DELETE
-      headers:
-        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
-    response:
-      status_code: 204
+  - *delete_admin
 
-  - &delete_admin_check
-    name:  "{admin_cleanup_check_description}"
-    request:
-      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
-      method: GET
-      headers:
-        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
-    response:
-      status_code: 404
+  - *delete_admin_check
 
 ---
 

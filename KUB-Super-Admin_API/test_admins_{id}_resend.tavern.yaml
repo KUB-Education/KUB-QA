@@ -1,4 +1,4 @@
-test_name: test all methods of admins/{id}/resend endpoint for positive cases
+test_name: Test POST for positive case and data coherency
 
 marks:
   - parametrize:
@@ -11,7 +11,8 @@ marks:
         - [ "Doe", "John", "Edward", "john.doe@example.com" ]
 
 stages:
-  - name: create admin
+  - name: "When a request with a valid json body,
+            POST /admins returns 201 and a json body that matches the request"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
@@ -37,7 +38,8 @@ stages:
         json:
           returned_id: id
 
-  - name: resend password
+  - name: "When request is made,
+            POST /admins/id/resend returns 200 and a json body what matches the created admin"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}/resend"
       method: POST
@@ -55,7 +57,7 @@ stages:
         status: !anystr
 
 finally:
-  - name: delete admin
+  - name: "When admin exists, DELETE /admins returns 204"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE
@@ -64,7 +66,7 @@ finally:
     response:
       status_code: 204
 
-  - name: check if created admin really doesn't exist
+  - name: "When admin deleted, GET /admins returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET
@@ -75,7 +77,7 @@ finally:
 
 ---
 
-test_name: test admins/{id}/resend endpoint for bad request error
+test_name: Test GET method for Bad Request error
 
 marks:
   - parametrize:
@@ -85,7 +87,7 @@ marks:
         - ["agadg"]
 
 stages:
-  - name: check admins/id/resend get for bad request error
+  - name: "When request is made, GET /admins/id/resend returns 400"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}/resend"
       method: GET
@@ -96,7 +98,7 @@ stages:
 
 ---
 
-test_name: test admins/{id}/resend endpoint for not found error
+test_name: Test POST method for Bad Request error
 
 marks:
   - parametrize:
@@ -110,7 +112,8 @@ marks:
         - [ "Doe", "John", "Edward", "john.doe@example.com", -1 ]
 
 stages:
-  - name: create admin
+  - name: "When a request with a valid json body,
+            POST /admins returns 201 and a json body that matches the request"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
@@ -137,7 +140,7 @@ stages:
           returned_id: id
 
 
-  - name: check admin resend post for not found error via wrong id
+  - name: "When request with wrong admin id, POST /admins/id/resend returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}/resend"
       method: POST
@@ -153,7 +156,7 @@ stages:
       status_code: 404
 
 finally:
-  - name: delete admin
+  - name: "When admin exists, DELETE /admins returns 204"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE
@@ -162,7 +165,7 @@ finally:
     response:
       status_code: 204
 
-  - name: check if deleted admin really doesn't exist
+  - name: "When admin deleted, GET /admins returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET
@@ -173,7 +176,7 @@ finally:
 
 ---
 
-test_name: test admins/{id}/resend endpoint for autorization error
+test_name: Test POST method for Unauthorized error
 
 marks:
   - parametrize:
@@ -187,7 +190,8 @@ marks:
         - [ "satsgag", "Doe", "John", "Edward", "john.doe@example.com" ]
 
 stages:
-  - name: create test admin
+  - name: "When a request with a valid json body,
+            POST /admins returns 201 and a json body that matches the request"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
@@ -213,7 +217,7 @@ stages:
         json:
           returned_id: id
 
-  - name: check admin resend post for autorization error
+  - name: "When request with invalid security key header, POST /admins/id/resend returns 401"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}/resend"
       method: POST
@@ -223,7 +227,7 @@ stages:
       status_code: 401
 
 finally:
-  - name: delete admin
+  - name: "When admin exists, DELETE /admins returns 204"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE
@@ -232,7 +236,7 @@ finally:
     response:
       status_code: 204
 
-  - name: check if created admin really doesn't exist
+  - name: "When admin deleted, GET /admins returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET

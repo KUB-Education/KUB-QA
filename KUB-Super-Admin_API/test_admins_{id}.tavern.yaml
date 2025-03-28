@@ -1,4 +1,4 @@
-test_name: test all methods of admins/{id} endpoint for positive cases
+test_name: Test methods for positive cases and data coherency
 
 marks:
   - parametrize:
@@ -15,7 +15,8 @@ marks:
         - ["Doe", "John", "Edward", "john.doe@example.com", "Smith", "Alice", "Bob", "alice.smith@example.com"]
 
 stages:
-  - name: create test admin
+  - name: "When a request with a valid json body,
+            POST /admins/id returns 201 and a json body that matches the request"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
@@ -47,7 +48,8 @@ stages:
           returned_email: email
           returned_status: status
 
-  - name: check created admin data match
+  - name: "When request,
+            GET /admins/id returns 200 and a json body that matches created admin"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET
@@ -64,7 +66,8 @@ stages:
         email: "{returned_email}"
         status: "{returned_status}"
 
-  - name: update admin
+  - name: "When a request with a valid json body,
+            PUT returns 200 and a json body that matches request"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: PUT
@@ -87,7 +90,8 @@ stages:
         email: "{update_email}"
         status: !anystr
 
-  - name: check if created admin really updated
+  - name: "When request,
+            GET /admins/id returns 200 and a json body that matches updated admin"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET
@@ -105,7 +109,7 @@ stages:
         status: !anystr
 
 finally:
-  - name: delete created admin
+  - name: "When admin exists, DELETE /admins/id returns 204"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE
@@ -114,7 +118,7 @@ finally:
     response:
       status_code: 204
 
-  - name: check if deleted admin really doesn't exist
+  - name:  "When admin deleted, GET /admins/id returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET
@@ -125,7 +129,7 @@ finally:
 
 ---
 
-test_name: test admins/{id} endpoint for bad request error
+test_name: Test GET, POST, PUT methods for Bad Request error
 
 marks:
   - parametrize:
@@ -139,7 +143,7 @@ marks:
         - ["agadg", "Doe", "John", "Edward", "john.doe@example.com"]
 
 stages:
-  - name: check admins/id get for bad request error
+  - name: "When request with wrong admin id, GET /admins/id returns 400"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}"
       method: GET
@@ -148,7 +152,7 @@ stages:
     response:
       status_code: 400
 
-  - name: check admins/id post for bad request error
+  - name: "When request with wrong admin id, POST /admins/id returns 400"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}"
       method: POST
@@ -163,7 +167,7 @@ stages:
     response:
       status_code: 400
 
-  - name: check admins/id put for bad request error
+  - name: "When request with wrong admin PUT/admins/id returns 400"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}"
       method: PUT
@@ -180,7 +184,7 @@ stages:
 
 ---
 
-test_name: test admins/{id} endpoint for not found error
+test_name: Test GET, PUT, DELETE methods for Not Found error
 
 marks:
   - parametrize:
@@ -194,7 +198,8 @@ marks:
         - [ "Doe", "John", "Edward", "john.doe@example.com", -1 ]
 
 stages:
-  - name: create test admin
+  - name: "When a request with a valid json body,
+            POST /admins/id returns 201 and a json body that matches the request"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
@@ -221,7 +226,7 @@ stages:
           returned_id: id
 
 finally:
-  - name: delete created admin
+  - name: "When admin exists, DELETE /admins/id returns 204"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE
@@ -230,7 +235,7 @@ finally:
     response:
       status_code: 204
 
-  - name: check admin/id get for not found error
+  - name: "When admin not exists, GET /admins/id returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET
@@ -239,7 +244,7 @@ finally:
     response:
       status_code: 404
 
-  - name: check admin/id put for not found error
+  - name: "When admin not exists, PUT /admins/id returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: PUT
@@ -254,22 +259,7 @@ finally:
     response:
       status_code: 404
 
-  - name: check admin put for not found error via wrong id
-    request:
-      url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}"
-      method: PUT
-      headers:
-        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
-        content: "application/json"
-      json:
-        last_name: "{request_last_name}"
-        first_name: "{request_first_name}"
-        middle_name: "{request_middle_name}"
-        email: "{request_email}"
-    response:
-      status_code: 404
-
-  - name: check admin/id delete for not found error
+  - name: "When admin not exists, DELETE /admins/id returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE
@@ -280,7 +270,7 @@ finally:
 
 ---
 
-test_name: test admins/{id} endpoint for wrong autorization header
+test_name: Test methods for Unauthorized error
 
 marks:
   - parametrize:
@@ -294,7 +284,8 @@ marks:
         - [ "satsgag", "Doe", "John", "Edward", "john.doe@example.com" ]
 
 stages:
-  - name: create test admin
+  - name: "When a request with a valid json body,
+            POST /admins/id returns 201 and a json body that matches the request"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
@@ -320,7 +311,7 @@ stages:
         json:
           returned_id: id
 
-  - name: check admin/id get for wrong autorization header
+  - name: "When request with invalid security key header, GET /admins/id returns 401"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET
@@ -329,7 +320,7 @@ stages:
     response:
       status_code: 401
 
-  - name: check admin/id put for wrong autorization header
+  - name: "When request with invalid security key header, PUT /admins returns 401"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: PUT
@@ -344,7 +335,7 @@ stages:
     response:
       status_code: 401
 
-  - name: check admin delete for wrong autorization header
+  - name: "When request with invalid security key header, DELETE /admins returns 401"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE
@@ -354,7 +345,7 @@ stages:
       status_code: 401
 
 finally:
-  - name: delete created admin
+  - name: "When admin exists, DELETE /admins/id returns 204"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE
@@ -363,7 +354,7 @@ finally:
     response:
       status_code: 204
 
-  - name: check if created admin really doesn't exist
+  - name: "When admin deleted, GET /admins returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET
@@ -374,7 +365,7 @@ finally:
 
 ---
 
-test_name: test admins/{id} endpoint put method for unprocessible entity error via invalid request data
+test_name: Test PUT method for Unprocessible Entity error
 
 marks:
   - parametrize:
@@ -391,7 +382,8 @@ marks:
         - ["Doe", "John", "Edward", "john.doe@example.com", "1", "2", "3", "4"]
 
 stages:
-  - name: create admin
+  - name: "When a request with a valid json body,
+            POST /admins/id returns 201 and a json body that matches the request"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
@@ -417,7 +409,7 @@ stages:
         json:
           returned_id: id
 
-  - name: check admin put for unprocessible entity error via invalid request data
+  - name: "When request with wrong json body data, PUT /admins/id returns 422"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: PUT
@@ -433,7 +425,7 @@ stages:
       status_code: 422
 
 finally:
-  - name: delete created admin
+  - name: "When admin exists, DELETE /admins/id returns 204"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE

@@ -1,4 +1,4 @@
-test_name: test all methods of admins endpoint for positive cases
+test_name: Test methods for positive cases and data coherency
 
 marks:
   - parametrize:
@@ -11,7 +11,8 @@ marks:
         - [ "Doe", "John", "Edward", "john.doe@example.com" ]
 
 stages:
-  - name: create admin
+  - name: "When a request with a valid json body,
+            POST /admins returns 201 and a json body that matches the request"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
@@ -37,7 +38,7 @@ stages:
         json:
           returned_id: id
 
-  - name: get admins
+  - name: "When response with valid json body structure, GET /admins returns 200"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: GET
@@ -80,7 +81,7 @@ stages:
                     required: True
 
 finally:
-  - name: delete admin
+  - name: "When admin exists, DELETE /admins returns 204"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE
@@ -89,7 +90,7 @@ finally:
     response:
       status_code: 204
 
-  - name: check if created admin really doesn't exist
+  - name: "When admin deleted, GET /admins returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET
@@ -100,24 +101,43 @@ finally:
 
 ---
 
-test_name: test admins endpoint for bad request error
+test_name: Test POST method for Bad Request error
 
 stages:
-  - name: check admins post for bad request
+  - name: "When request without json body, POST /admins returns 400"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
         Content-Type: "application/json"
-        json:
-          []
     response:
       status_code: 400
 
 ---
 
-test_name: test admins endpoint post method for autorization error
+test_name: Test GET method for Unauthorized error
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+      vals:
+        - [ "satsgag", "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - name: "When request with invalid security key header, GET /admins returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{wrong_token}"
+    response:
+      status_code: 401
+
+---
+
+test_name: Test POST method for Unauthorized error
 
 marks:
   - parametrize:
@@ -131,7 +151,7 @@ marks:
         - [ "satsgag", "Doe", "John", "Edward", "john.doe@example.com" ]
 
 stages:
-  - name: check admins post for wrong autorization header
+  - name: "When request with invalid security key header, POST /admins returns 401"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
@@ -148,28 +168,7 @@ stages:
 
 ---
 
-test_name: test admins endpoint get method for autorization error
-
-marks:
-  - parametrize:
-      key:
-        - wrong_token
-      vals:
-        - ["satsgag"]
-
-stages:
-  - name: check admins get for autorization error
-    request:
-      url: "{tavern.env_vars.BASE_URL}/admins"
-      method: GET
-      headers:
-        X-SUPER-ADMIN-KEY: "{wrong_token}"
-    response:
-      status_code: 401
-
----
-
-test_name: test admins post method endpoint for unprocessible entity error
+test_name: Test POST method for Unprocessible Entity error
 
 marks:
   - parametrize:
@@ -182,7 +181,7 @@ marks:
         - [ "1", "2", "3", "4" ]
 
 stages:
-  - name: check admins post for unprocessible entity error
+  - name: "When request with wrong json body data, POST /admins returns 422"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
@@ -199,7 +198,7 @@ stages:
 
 ---
 
-test_name: test admins post method endpoint for user conflict error
+test_name: Test POST method for User Conflict error
 
 marks:
   - parametrize:
@@ -212,7 +211,8 @@ marks:
         - [ "Doe", "John", "Edward", "john.doe@example.com" ]
 
 stages:
-  - name: create admin
+  - name: "When a request with a valid json body,
+            POST /admins returns 201 and a json body that matches the request"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
@@ -238,7 +238,7 @@ stages:
         json:
           returned_id: id
 
-  - name: repeat admin creation with same data
+  - name: "When request with json body that data match another user data, POST admin returns 409"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST
@@ -254,7 +254,7 @@ stages:
       status_code: 409
 
 finally:
-  - name: delete admin
+  - name: "When admin exists, DELETE /admins returns 204"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: DELETE
@@ -263,7 +263,7 @@ finally:
     response:
       status_code: 204
 
-  - name: check if created admin really doesn't exist
+  - name: "When admin deleted, GET /admins returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: GET

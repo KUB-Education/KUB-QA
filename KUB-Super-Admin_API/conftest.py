@@ -1,32 +1,31 @@
-import json
 import pytest
-import logging
 from dotenv import load_dotenv
+from tavern._core.exceptions import TestFailError
 
 load_dotenv()
 
+TestFailError = AssertionError
+
+#fixtures
+
+@pytest.fixture
+def admin_setup_description():
+    return "When request with valid json body, POST /admins returns 201"
+
+@pytest.fixture
+def admin_cleanup_description():
+    return "When admin exists, DELETE /admins/id returns 204"
+
+@pytest.fixture
+def admin_cleanup_check_description():
+    return "When admin deleted, GET /admins/id returns 404"
+
 #hooks
 
-def pytest_tavern_beta_before_every_request(request_args):
-    if "json" in request_args:
-        json_formatted_str = json.dumps(request_args["json"], indent=2)
-        logging.info("Request input json data:\n"+json_formatted_str)
-
-def pytest_tavern_beta_after_every_response(expected, response):
-    try:
-        expected_str = str(expected)
-        expected_str = expected_str.replace("<", "\'")
-        expected_str = expected_str.replace(">", "\'")
-        expected_str = expected_str.replace("\'", "\"")
-        expected_json = json.loads(expected_str)
-        response_json = response.json()
-        if "json" in expected_json:
-            expected_str = json.dumps(json.loads(expected_str)["json"], indent=2)
-            logging.info("Expected response output json data:\n"+expected_str)
-    except:
-        logging.info("Expected response output json data:\n"+str(expected))
-    try:
-        responce_str = json.dumps(response.json(), indent=2)
-        logging.info("Actual response output json data:\n"+responce_str)
-    except:
-        pass
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    report = outcome.get_result()
+    if report.when == "call" and report.outcome == "failed":
+        if isinstance(call.excinfo.value, TestFailError):
+            call.excinfo._excinfo = (AssertionError, AssertionError(str(call.excinfo.value)), call.excinfo.tb)

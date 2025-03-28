@@ -4,8 +4,6 @@ from tavern._core.exceptions import TestFailError
 
 load_dotenv()
 
-TestFailError = AssertionError
-
 #fixtures
 
 @pytest.fixture

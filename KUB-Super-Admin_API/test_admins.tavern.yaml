@@ -1,4 +1,4 @@
-test_name: Test methods for positive cases and data coherency
+test_name: When request with valid json body, POST /admins returns 201
 
 marks:
   - usefixtures:
@@ -107,7 +107,7 @@ finally:
 
 ---
 
-test_name: Test POST method for Bad Request error when request without json body
+test_name: When request without json body, POST /admins returns 400
 
 stages:
   - name: "When request without json body, POST /admins returns 400"
@@ -122,7 +122,7 @@ stages:
 
 ---
 
-test_name: Test GET method for Unauthorized error
+test_name: When request with invalid security key header, GET /admins returns 401
 
 marks:
   - parametrize:
@@ -143,7 +143,7 @@ stages:
 
 ---
 
-test_name: Test POST method for Unauthorized error
+test_name: When request with invalid security key header, POST /admins returns 401
 
 marks:
   - parametrize:
@@ -174,7 +174,7 @@ stages:
 
 ---
 
-test_name: Test POST method for Unprocessible Entity error
+test_name: When request with wrong json body data, POST /admins returns 422
 
 marks:
   - parametrize:
@@ -204,7 +204,7 @@ stages:
 
 ---
 
-test_name: Test POST method for User Conflict error
+test_name: When request with json body that data match another user data, POST admin returns 409
 
 marks:
   - usefixtures:

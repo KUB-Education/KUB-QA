@@ -1,4 +1,4 @@
-test_name: Test POST method for positive case and data coherency
+test_name: When request is made, GET /admins/id returns 200 and a json body that matches created admin
 
 marks:
   - usefixtures:
@@ -89,7 +89,7 @@ finally:
 
 ---
 
-test_name: Test PUT method for positive case and data coherency
+test_name:  When a request with a valid json body, PUT returns 200 and a json body that matches request
 
 marks:
   - usefixtures:
@@ -161,7 +161,7 @@ finally:
 
 ---
 
-test_name: Test PUT method for Bad Request error when request without json body
+test_name: When request without json body, PUT/admins/id returns 400
 
 marks:
   - usefixtures:
@@ -223,7 +223,7 @@ finally:
   - *delete_admin_check
 ---
 
-test_name: Test GET method for Not Found error when admin deleted
+test_name: When admin deleted, GET /admins/{id} returns 404
 
 marks:
   - usefixtures:
@@ -288,7 +288,7 @@ finally:
 
 ---
 
-test_name: Test DELETE method for Not Found error when admin deleted
+test_name: When admin deleted, DELETE /admins/{id} returns 404
 
 marks:
   - usefixtures:
@@ -321,7 +321,7 @@ finally:
 
 ---
 
-test_name: Test GET method for Not Found error when id from admin what not exist
+test_name: When id from admin what not exist, GET /admins/{id} returns 404
 
 marks:
   - parametrize:
@@ -342,7 +342,7 @@ stages:
 
 ---
 
-test_name: Test PUT method for Not Found error when id from admin what not exist
+test_name: When id from admin what not exist, PUT /admins/{id} returns 404
 
 marks:
   - parametrize:
@@ -373,7 +373,7 @@ stages:
 
 ---
 
-test_name: Test DELETE method for Not Found error when id from admin what not exist
+test_name: When id from admin what not exist, DELETE /admins/{id} returns 404
 
 marks:
   - parametrize:
@@ -394,7 +394,7 @@ stages:
 
 ---
 
-test_name: Test GET method for Unauthorized error
+test_name: When request with invalid security key header, GET /admins/id returns 401
 
 marks:
   - usefixtures:
@@ -430,7 +430,7 @@ finally:
 
 ---
 
-test_name: Test PUT method for Unauthorized error
+test_name: When request with invalid security key header, PUT /admins returns 401
 
 marks:
   - usefixtures:
@@ -472,7 +472,7 @@ finally:
 
 ---
 
-test_name: Test DELETE method for Unauthorized error
+test_name: When request with invalid security key header, DELETE /admins returns 401
 
 marks:
   - usefixtures:
@@ -508,7 +508,7 @@ finally:
 
 ---
 
-test_name: Test PUT method for Unprocessible Entity error
+test_name: When request with wrong json body data, PUT /admins/id returns 422
 
 marks:
   - usefixtures:

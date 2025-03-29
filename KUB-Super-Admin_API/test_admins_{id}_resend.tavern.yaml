@@ -1,4 +1,4 @@
-test_name: Test POST for positive case and data coherency
+test_name: When valid request is made, POST /admins/id/resend returns 200 and a json body what matches the created admin
 
 marks:
   - usefixtures:
@@ -42,7 +42,7 @@ stages:
         json:
           returned_id: id
 
-  - name: "When request is made,
+  - name: "When valid request is made,
             POST /admins/id/resend returns 200 and a json body what matches the created admin"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}/resend"
@@ -83,7 +83,7 @@ finally:
 
 ---
 
-test_name: Test POST method for Bad Request error
+test_name: When request with wrong admin id, POST /admins/id/resend returns 400
 
 marks:
   - parametrize:
@@ -104,7 +104,7 @@ stages:
 
 ---
 
-test_name: Test POST method for Not Found error when id from admin what not exist
+test_name: When id from admin what not exist, POST /admins/id/resend returns 404
 
 marks:
   - parametrize:
@@ -125,7 +125,7 @@ stages:
 
 ---
 
-test_name: Test POST method for Not Found error when admin deleted
+test_name: When admin deleted, POST /admins/id/resend returns 404
 
 marks:
   - usefixtures:
@@ -159,7 +159,7 @@ stages:
 
 ---
 
-test_name: Test POST method for Unauthorized error
+test_name: When request with invalid security key header, POST /admins/id/resend returns 401
 
 marks:
   - usefixtures:

@@ -107,7 +107,7 @@ finally:
 
 ---
 
-test_name: Test POST method for Bad Request error
+test_name: Test POST method for Bad Request error when request without json body
 
 stages:
   - name: "When request without json body, POST /admins returns 400"
@@ -164,11 +164,11 @@ stages:
       headers:
         X-SUPER-ADMIN-KEY: "{wrong_token}"
         Content-Type: "application/json"
-        json:
-          last_name: "{request_last_name}"
-          first_name: "{request_first_name}"
-          middle_name: "{request_middle_name}"
-          email: "{request_email}"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
     response:
       status_code: 401
 

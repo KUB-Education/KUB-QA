@@ -83,20 +83,20 @@ finally:
 
 ---
 
-test_name: Test GET method for Bad Request error
+test_name: Test POST method for Bad Request error
 
 marks:
   - parametrize:
       key:
         - wrong_id
       vals:
-        - ["agadg"]
+        - [ "asafaf" ]
 
 stages:
-  - name: "When request is made, GET /admins/id/resend returns 400"
+  - name: "When request with wrong admin id, POST /admins/id/resend returns 400"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}/resend"
-      method: GET
+      method: POST
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
     response:
@@ -104,7 +104,28 @@ stages:
 
 ---
 
-test_name: Test POST method for Bad Request error
+test_name: Test POST method for Not Found error when id from admin what not exist
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - [ -1 ]
+
+stages:
+  - name: "When id from admin what not exist, POST /admins/id/resend returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}/resend"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: Test POST method for Not Found error when admin deleted
 
 marks:
   - usefixtures:
@@ -113,35 +134,26 @@ marks:
     - admin_cleanup_check_description
   - parametrize:
       key:
-        - wrong_id
         - request_last_name
         - request_first_name
         - request_middle_name
         - request_email
       vals:
-        - [ -1, "Doe", "John", "Edward", "john.doe@example.com" ]
+        - [ "Doe", "John", "Edward", "john.doe@example.com" ]
 
 stages:
   - *create_admin
 
+  - *delete_admin
 
-  - name: "When request with wrong admin id, POST /admins/id/resend returns 404"
+  - name: "When admin deleted, POST /admins/id/resend returns 404"
     request:
-      url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}/resend"
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}/resend"
       method: POST
       headers:
         X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
-        Content-Type: "application/json"
-      json:
-        last_name: "{request_last_name}"
-        first_name: "{request_first_name}"
-        middle_name: "{request_middle_name}"
-        email: "{request_email}"
     response:
       status_code: 404
-
-finally:
-  - *delete_admin
 
   - *delete_admin_check
 

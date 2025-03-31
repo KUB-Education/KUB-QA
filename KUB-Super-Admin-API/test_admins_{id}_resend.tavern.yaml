@@ -1,0 +1,194 @@
+test_name: When valid request is made, POST /admins/id/resend returns 200 and a json body what matches the created admin
+
+marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - &create_admin
+    name: "{admin_setup_description}"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        user_id: !anyint
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+        status: !anystr
+      save:
+        json:
+          returned_id: id
+
+  - name: "When valid request is made,
+            POST /admins/id/resend returns 200 and a json body what matches the created admin"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}/resend"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 200
+      json:
+        id: !anyint
+        user_id: !anyint
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+        status: !anystr
+
+finally:
+  - &delete_admin
+    name: "{admin_cleanup_description}"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: DELETE
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 204
+
+  - &delete_admin_check
+    name: "{admin_cleanup_check_description}"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When request with wrong admin id, POST /admins/id/resend returns 400
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - [ "asafaf" ]
+
+stages:
+  - name: "When request with wrong admin id, POST /admins/id/resend returns 400"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}/resend"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 400
+
+---
+
+test_name: When id from admin what not exist, POST /admins/id/resend returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - [ -1 ]
+
+stages:
+  - name: "When id from admin what not exist, POST /admins/id/resend returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}/resend"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When admin deleted, POST /admins/id/resend returns 404
+
+marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - *create_admin
+
+  - *delete_admin
+
+  - name: "When admin deleted, POST /admins/id/resend returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}/resend"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404
+
+  - *delete_admin_check
+
+---
+
+test_name: When request with invalid security key header, POST /admins/id/resend returns 401
+
+marks:
+  - usefixtures:
+      - admin_setup_description
+      - admin_cleanup_description
+      - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - wrong_token
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "satsgag", "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - *create_admin
+
+  - name: "When request with invalid security key header, POST /admins/id/resend returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}/resend"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{wrong_token}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_admin
+
+  - *delete_admin_check

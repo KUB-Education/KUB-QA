@@ -1,0 +1,552 @@
+test_name: When request is made, GET /admins/id returns 200 and a json body that matches created admin
+
+marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - ["Doe", "John", "Edward", "john.doe@example.com"]
+
+stages:
+  - &create_admin_save_all
+    name: "{admin_setup_description}"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        user_id: !anyint
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+        status: !anystr
+      save:
+        json:
+          returned_id: id
+          returned_user_id: user_id
+          returned_last_name: last_name
+          returned_first_name: first_name
+          returned_middle_name: middle_name
+          returned_email: email
+          returned_status: status
+
+  - name: "When request is made,
+            GET /admins/id returns 200 and a json body that matches created admin"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 200
+      json:
+        id: !int "{returned_id:d}"
+        user_id: !int "{returned_user_id:d}"
+        last_name: "{returned_last_name}"
+        first_name: "{returned_first_name}"
+        middle_name: "{returned_middle_name}"
+        email: "{returned_email}"
+        status: "{returned_status}"
+
+finally:
+  - &delete_admin
+    name: "{admin_cleanup_description}"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: DELETE
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 204
+
+  - &delete_admin_check
+    name:  "{admin_cleanup_check_description}"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name:  When a request with a valid json body, PUT returns 200 and a json body that matches request
+
+marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - update_last_name
+        - update_first_name
+        - update_middle_name
+        - update_email
+      vals:
+        - ["Doe", "John", "Edward", "john.doe@example.com", "Smith", "Alice", "Bob", "alice.smith@example.com"]
+
+stages:
+  - *create_admin_save_all
+
+  - name: "When a request with a valid json body,
+            PUT returns 200 and a json body that matches request"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: PUT
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{update_last_name}"
+        first_name: "{update_first_name}"
+        middle_name: "{update_middle_name}"
+        email: "{update_email}"
+    response:
+      status_code: 200
+      json:
+        id: !int "{returned_id:d}"
+        user_id: !int "{returned_user_id:d}"
+        last_name: "{update_last_name}"
+        first_name: "{update_first_name}"
+        middle_name: "{update_middle_name}"
+        email: "{update_email}"
+        status: !anystr
+
+  - name: "When request is made,
+            GET /admins/id returns 200 and a json body that matches updated admin"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 200
+      json:
+        id: !int "{returned_id:d}"
+        user_id: !int "{returned_user_id:d}"
+        last_name: "{update_last_name}"
+        first_name: "{update_first_name}"
+        middle_name: "{update_middle_name}"
+        email: "{update_email}"
+        status: !anystr
+
+finally:
+  - *delete_admin
+
+  - *delete_admin_check
+
+---
+
+test_name: When request without json body, PUT/admins/id returns 400
+
+marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - wrong_id
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "agadg", "Doe", "John", "Edward", "john.doe@example.com", ]
+
+stages:
+  - &create_admin_save_id
+    name: "When a request with a valid json body,
+              POST /admins/id returns 201 and a json body that matches the request"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        user_id: !anyint
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+        status: !anystr
+      save:
+        json:
+          returned_id: id
+
+  - name: "When request without json body, PUT/admins/id returns 400"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: PUT
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+    response:
+      status_code: 400
+
+finally:
+  - *delete_admin
+
+  - *delete_admin_check
+---
+
+test_name: When admin deleted, GET /admins/{id} returns 404
+
+marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - *create_admin_save_id
+
+finally:
+  - *delete_admin
+
+  - *delete_admin_check
+
+---
+
+test_name: Test PUT method for Not Found error when admin deleted
+
+marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - *create_admin_save_id
+
+finally:
+  - *delete_admin
+
+  - name: "When admin not exists, PUT /admins/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: PUT
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When admin deleted, DELETE /admins/{id} returns 404
+
+marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - *create_admin_save_id
+
+finally:
+  - *delete_admin
+
+  - name: "When admin not exists, DELETE /admins/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: DELETE
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from admin what not exist, GET /admins/{id} returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - [ -1 ]
+
+stages:
+  - name: "When id from admin what not exist, GET /admins/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from admin what not exist, PUT /admins/{id} returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+        - update_last_name
+        - update_first_name
+        - update_middle_name
+        - update_email
+      vals:
+        - [ -1, "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - name: "When id from admin what not exist, PUT /admins/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}"
+      method: PUT
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{update_last_name}"
+        first_name: "{update_first_name}"
+        middle_name: "{update_middle_name}"
+        email: "{update_email}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from admin what not exist, DELETE /admins/{id} returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - [ -1 ]
+
+stages:
+  - name: "When id from admin what not exist, DELETE /admins/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{wrong_id}"
+      method: DELETE
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When request with invalid security key header, GET /admins/id returns 401
+
+marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - wrong_token
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "satsgag", "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - *create_admin_save_id
+
+  - name: "When request with invalid security key header, GET /admins/id returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: GET
+      headers:
+        X-SUPER-ADMIN-KEY: "{wrong_token}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_admin
+
+  - *delete_admin_check
+
+---
+
+test_name: When request with invalid security key header, PUT /admins returns 401
+
+marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - wrong_token
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "satsgag", "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - *create_admin_save_id
+
+  - name: "When request with invalid security key header, PUT /admins returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: PUT
+      headers:
+        X-SUPER-ADMIN-KEY: "{wrong_token}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_admin
+
+  - *delete_admin_check
+
+---
+
+test_name: When request with invalid security key header, DELETE /admins returns 401
+
+marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - wrong_token
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "satsgag", "Doe", "John", "Edward", "john.doe@example.com" ]
+
+stages:
+  - *create_admin_save_id
+
+  - name: "When request with invalid security key header, DELETE /admins returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: DELETE
+      headers:
+        X-SUPER-ADMIN-KEY: "{wrong_token}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_admin
+
+  - *delete_admin_check
+
+---
+
+test_name: When request with wrong json body data, PUT /admins/id returns 422
+
+marks:
+  - usefixtures:
+    - admin_setup_description
+    - admin_cleanup_description
+    - admin_cleanup_check_description
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - wrong_request_last_name
+        - wrong_request_first_name
+        - wrong_request_middle_name
+        - wrong_request_email
+      vals:
+        - ["Doe", "John", "Edward", "john.doe@example.com", "1", "2", "3", "4"]
+
+stages:
+  - *create_admin_save_id
+
+  - name: "When request with wrong json body data, PUT /admins/id returns 422"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
+      method: PUT
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{wrong_request_last_name}"
+        first_name: "{wrong_request_first_name}"
+        middle_name: "{wrong_request_middle_name}"
+        email: "{wrong_request_email}"
+    response:
+      status_code: 422
+
+finally:
+  - *delete_admin
+
+  - *delete_admin_check

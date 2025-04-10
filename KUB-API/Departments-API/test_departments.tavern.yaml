@@ -179,3 +179,74 @@ finally:
   - *delete_department
 
   - *delete_department_check
+
+---
+
+test_name: When request with invalid security key header, GET /departments returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+      vals:
+        - [ "satsgag" ]
+
+stages:
+  - name: "When request with invalid security key header, GET /departments returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments"
+      method: GET
+      headers:
+        Authorization: "Bearer {wrong_token}"
+    response:
+      status_code: 401
+
+---
+
+test_name: When request with invalid parameters in json body, GET /departments returns 400
+
+ - parametrize:
+      key:
+        - request_email
+        - 
+      vals:
+        - [ "john.doe@example.com" ]
+
+- name: "When request with invalid parameters in json body, GET /departments returns 400"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments"
+      method: GET
+      headers:
+        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        email: "{request_email}"
+    response:
+      status_code: 400
+
+---
+
+test_name: When request with invalid json body data, GET /departments returns 422
+
+marks:
+  - parametrize:
+      key:
+        - invalid_nameContains
+      vals:
+        - [ "12345678901234567890123456789012345678901234567890123456789012345678901234567890
+        12345678901234567890123456789012345678901234567890123456789012345678901234567890
+        12345678901234567890123456789012345678901234567890123456789012345678901234567890
+        12345678901234567890123456789012345678901234567890123456789012345678901234567890" ]
+
+stages:
+  - name: "When request with invalid json body data, GET /departments returns 422"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments"
+      method: GET
+      headers:
+        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        nameContains: "{invalid_nameContains}"
+    response:
+      status_code: 422

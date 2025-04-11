@@ -379,3 +379,87 @@ finally:
   - *delete_department
 
   - *delete_department_check
+
+---
+
+test_name: When request with invalid security key header, DELETE /departments/id returns 401
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - wrong_token
+        - request_name
+      vals:
+        - [ "satsgag", "Computer Science Department"]
+
+stages:
+  - *create_department_save_id
+
+  - name: "When request with invalid security key header, DELETE /departments/id returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {wrong_token}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_department
+
+  - *delete_department_check
+
+---
+
+test_name: When department deleted, DELETE /departments/id returns 404
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - reques_name
+      vals:
+        - ["Computer Science Department"]
+
+stages:
+  - *create_department_save_id
+
+finally:
+  - *delete_department
+
+  - name: "When department not exists, DELETE /departments/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from department that not exist, DELETE /departments/id returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - [ -1 ]
+
+stages:
+  - name: "When id from department that not exist, DELETE /departments/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{wrong_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+    response:
+      status_code: 404

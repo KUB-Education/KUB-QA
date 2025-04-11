@@ -1,7 +1,7 @@
 test_name: When request is made, GET /departments/id returns 200 and a json body that matches created department
 
 marks:
-   - usefixtures:
+  - usefixtures:
       - department_setup_description
       - department_cleanup_description
       - department_cleanup_check_description
@@ -85,7 +85,25 @@ marks:
         - [ "satsgag", "Computer Science Department" ]
 
 stages:
-  - *create_department_save_id
+  - &create_department_save_id
+    name: "When a request with a valid json body,
+              POST /departments/id returns 201 and a json body that matches the request"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments"
+      method: POST
+      headers:
+        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        name: "{request_name}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        name: "{request_name}"
+      save:
+        json:
+          returned_id: id
 
   - name: "When request with invalid security key header, GET /departments/id returns 401"
     request:
@@ -159,7 +177,7 @@ marks:
         - request_name
         - update_name
       vals:
-        - ["Computer Science Department"]
+        - ["Computer Science Department", "Math Department"]
 
 stages:
   - *create_department_save_all
@@ -215,25 +233,7 @@ marks:
         - ["Computer Science Department"]
 
 stages:
-  - &create_department_save_id
-    name: "When a request with a valid json body,
-              POST /departments/id returns 201 and a json body that matches the request"
-    request:
-      url: "{tavern.env_vars.BASE_URL}/departments"
-      method: POST
-      headers:
-        Authorization: "Bearer {tavern.env_vars.TOKEN}"
-        Content-Type: "application/json"
-      json:
-        name: "{request_name}"
-    response:
-      status_code: 201
-      json:
-        id: !anyint
-        name: "{request_name}"
-      save:
-        json:
-          returned_id: id
+  - *create_department_save_id
 
   - name: "When request without json body, PUT /departments/id returns 400"
     request:

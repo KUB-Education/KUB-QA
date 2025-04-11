@@ -161,7 +161,7 @@ marks:
         - [ "Computer Science Department"  ]
 
 stages:
-  - *create_admin
+  - *create_department
 
   - name: "When request with json body that data match another user data, POST /departments returns 409"
     request:
@@ -205,14 +205,14 @@ stages:
 
 test_name: When request with invalid parameters in json body, GET /departments returns 400
 
+marks:
  - parametrize:
       key:
         - request_email
-        - 
       vals:
-        - [ "john.doe@example.com" ]
-
-- name: "When request with invalid parameters in json body, GET /departments returns 400"
+        - ["john.doe@example.com"]
+stages:
+  - name: "When request with invalid parameters in json body, GET /departments returns 400"
     request:
       url: "{tavern.env_vars.BASE_URL}/departments"
       method: GET

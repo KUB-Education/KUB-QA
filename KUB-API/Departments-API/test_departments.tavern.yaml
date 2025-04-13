@@ -11,13 +11,31 @@ marks:
       vals:
         - [ "Computer Science Department" ]
 stages:
+  - &auth_save_token
+    name: Login and save access token
+    request:
+      url: "{tavern.env_vars.AUTH_URL}/auth/login"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+      json:
+        email: "{tavern.env_vars.ADMIN_EMAIL}"
+        password: "{tavern.env_vars.ADMIN_PASSWORD}"
+    response:
+      status_code: 200
+      json:
+        access_token: !anystr
+      save:
+        json:
+          returned_access_token: access_token
+
   - &create_department
     name: "{department_setup_description}"
     request:
       url: "{tavern.env_vars.BASE_URL}/departments"
       method: POST
       headers:
-        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+        Authorization: "Bearer {returned_access_token}"
         Content-Type: "application/json"
       json:
         name: "{request_name}"
@@ -35,7 +53,7 @@ stages:
       url: "{tavern.env_vars.BASE_URL}/departments"
       method: GET
       headers:
-        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+        Authorization: "Bearer {returned_access_token}"
         Content-Type: "application/json"
       json:
         nameContains: "{request_name}"
@@ -67,7 +85,7 @@ finally:
       url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
       method: DELETE
       headers:
-        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+        Authorization: "Bearer {returned_access_token}"
     response:
       status_code: 204
 
@@ -77,7 +95,7 @@ finally:
       url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
       method: GET
       headers:
-        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+        Authorization: "Bearer {returned_access_token}"
     response:
       status_code: 404
 
@@ -86,12 +104,14 @@ finally:
 test_name: When request without json body, POST /departments returns 400
 
 stages:
+  - *auth_save_token
+
   - name: "When request without json body, POST /departments returns 400"
     request:
       url: "{tavern.env_vars.BASE_URL}/departments"
       method: POST
       headers:
-        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+        Authorization: "Bearer {returned_access_token}"
         Content-Type: "application/json"
     response:
       status_code: 400
@@ -114,7 +134,7 @@ stages:
       url: "{tavern.env_vars.BASE_URL}/departments"
       method: POST
       headers:
-        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+        Authorization: "Bearer {wrong_roken}"
         Content-Type: "application/json"
       json:
         name: "{request_name}"
@@ -133,12 +153,14 @@ marks:
         - [ "" ]
 
 stages:
+  - *auth_save_token
+
   - name: "When request with wrong json body data, POST /departments returns 422"
     request:
       url: "{tavern.env_vars.BASE_URL}/departments"
       method: POST
       headers:
-        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+        Authorization: "Bearer {returned_access_token}"
         Content-Type: "application/json"
       json:
         name: "{wrong_request_name}"
@@ -161,6 +183,8 @@ marks:
         - [ "Computer Science Department"  ]
 
 stages:
+  - *auth_save_token
+  
   - *create_department
 
   - name: "When request with json body that data match another user data, POST /departments returns 409"
@@ -168,7 +192,7 @@ stages:
       url: "{tavern.env_vars.BASE_URL}/departments"
       method: POST
       headers:
-        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+        Authorization: "Bearer {returned_access_token}"
         Content-Type: "application/json"
       json:
         name: "{request_name}"
@@ -212,12 +236,14 @@ marks:
       vals:
         - ["john.doe@example.com"]
 stages:
+  - *auth_save_token
+
   - name: "When request with invalid parameters in json body, GET /departments returns 400"
     request:
       url: "{tavern.env_vars.BASE_URL}/departments"
       method: GET
       headers:
-        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+        Authorization: "Bearer {returned_access_token}"
         Content-Type: "application/json"
       json:
         email: "{request_email}"
@@ -239,12 +265,14 @@ marks:
         12345678901234567890123456789012345678901234567890123456789012345678901234567890" ]
 
 stages:
+  - *auth_save_token
+
   - name: "When request with invalid json body data, GET /departments returns 422"
     request:
       url: "{tavern.env_vars.BASE_URL}/departments"
       method: GET
       headers:
-        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+        Authorization: "Bearer {returned_access_token}"
         Content-Type: "application/json"
       json:
         nameContains: "{invalid_nameContains}"

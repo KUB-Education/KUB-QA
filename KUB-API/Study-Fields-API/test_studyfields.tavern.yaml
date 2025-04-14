@@ -256,6 +256,8 @@ marks:
         - [ "CS101","computer_science" ]
 
 stages:
+  - *auth_save_token
+  
   - *create_studyfield
 
   - *get_studyfields

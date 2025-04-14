@@ -206,6 +206,8 @@ marks:
         - [ -1 ]
 
 stages:
+  - *auth_save_token
+
   - name: "When id from studyfield that not exist, GET /studyfields/id returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/studyfields/{wrong_id}"
@@ -230,6 +232,8 @@ marks:
         - ["CS101", "computer_science", "MT101","math"]
 
 stages:
+  - *auth_save_token
+
   - *create_studyfield_save_all
 
   - name: "When a request with a valid json body,
@@ -316,6 +320,8 @@ marks:
         - [ "satsgag", "CS101", "computer_science"]
 
 stages:
+  - *auth_save_token
+
   - *create_studyfield_save_id
 
   - name: "When request with invalid security key header, PUT /studyfields returns 401"
@@ -461,7 +467,7 @@ marks:
 
 stages:
   - *auth_save_token
-  
+
   - *create_studyfield_save_id
 
   - *delete_studyfield
@@ -483,6 +489,8 @@ marks:
         - [ "satsgag", "CS101","computer_science"]
 
 stages:
+  - *auth_save_token
+  
   - *create_studyfield_save_id
 
   - name: "When request with invalid security key header, DELETE /studyfields/id returns 401"

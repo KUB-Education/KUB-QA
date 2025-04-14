@@ -214,3 +214,235 @@ stages:
         Authorization: "Bearer {returned_access_token}"
     response:
       status_code: 404
+
+---
+
+test_name:  When a request with a valid json body, PUT /studyfields/id returns 200 and a json body that matches request
+
+marks:
+  - parametrize:
+      key:
+        - request_code
+        - request_name
+        - update_code
+        - update_name
+      vals:
+        - ["CS101", "computer_science", "MT101","math"]
+
+stages:
+  - *create_studyfield_save_all
+
+  - name: "When a request with a valid json body,
+            PUT /studyfields/id returns 200 and a json body that matches request"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/studyfields/{returned_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        code: "{update_code}"
+        name: "{update_name}"
+    response:
+      status_code: 200
+      json:
+        id: !int "{returned_id:d}"
+        code: "{update_code}"
+        name: "{update_name}"
+
+  - name: "When request is made,
+            GET /studyfields/id returns 200 and a json body that matches updated studyfield"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/studyfields/{returned_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 200
+      json:
+        id: !int "{returned_id:d}"
+        code: "{update_code}"
+        name: "{update_name}"
+    
+
+finally:
+  - *delete_studyfield
+
+  - *delete_studyfield_check
+
+---
+
+test_name: When request without json body, PUT /studyfields/id returns 400
+
+marks:
+  - parametrize:
+      key:
+        - request_code
+        - request_name
+      vals:
+        - ["CS101", "computer_science"]
+
+stages:
+  - *auth_save_token
+
+  - *create_studyfield_save_id
+
+  - name: "When request without json body, PUT /studyfields/id returns 400"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/studyfields/{returned_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 400
+
+finally:
+  - *delete_studyfield
+
+  - *delete_studyfield_check
+
+---
+
+test_name: When request with invalid security key header, PUT /studyfields/id returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+        - request_code
+        - request_name
+      vals:
+        - [ "satsgag", "CS101", "computer_science"]
+
+stages:
+  - *create_studyfield_save_id
+
+  - name: "When request with invalid security key header, PUT /studyfields returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/studyfields/{returned_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {wrong_token}"
+        Content-Type: "application/json"
+      json:
+        code: "{request_code}"
+        name: "{request_name}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_studyfield
+
+  - *delete_studyfield_check
+
+---
+
+test_name: When studyfield deleted, PUT /studyfields/id returns 404
+
+marks:
+  - parametrize:
+      key:
+        - request_code
+        - request_name
+      vals:
+        - ["CS101", "computer_science"]
+
+stages:
+  - *auth_save_token
+
+  - *create_studyfield_save_id
+
+finally:
+  - *delete_studyfield
+
+  - name: "When studyfield deleted, PUT /studyfields/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/studyfields/{returned_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        name: "{request_name}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from studyfield that not exist, PUT /studyfields/id returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+        - update_code
+        - update_name
+      vals:
+        - [ -1, "CS101", "computer_science"]
+
+stages:
+  - *auth_save_token
+
+  - name: "When id from studyfield that not exist, PUT /studyfields/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/studyfields/{wrong_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        code: "{update_code}"
+        name: "{update_name}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When request with wrong json body data, PUT /studyfields/id returns 422
+
+marks:
+  - parametrize:
+      key:
+        - request_code
+        - wrong_request_code
+        - request_name
+        - wrong_request_name
+      vals:
+        - ["CS101", "", "computer_science", ""]
+
+stages:
+  - *auth_save_token
+
+  - *create_studyfield_save_id
+
+  - name: "When request with wrong json body data(code), PUT /studyfields/id returns 422"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/studyfields/{returned_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        code: "{wrong_request_code}"
+        name: "{request_name}"
+    response:
+      status_code: 422
+
+  - name: "When request with wrong json body data(name), PUT /studyfields/id returns 422"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/studyfields/{returned_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        code: "{request_code}"
+        name: "{wrong_request_name}"
+    response:
+      status_code: 422
+
+finally:
+  - *delete_studyfield
+
+  - *delete_studyfield_check

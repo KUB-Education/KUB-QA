@@ -242,3 +242,46 @@ stages:
         name: "{wrong_request_name}"
     response:
       status_code: 422
+
+---
+
+test_name: When response with valid json body structure, GET /studyfields returns 200
+
+marks:
+ - parametrize:
+      key:
+        - request_code
+        - request_name
+      vals:
+        - [ "CS101","computer_science" ]
+
+stages:
+  - *create_studyfield
+
+  - *get_studyfields
+
+finally:
+  - *delete_studyfield
+
+  - *delete_studyfield_check
+
+--- 
+
+test_name: When request with invalid security key header, GET /studyfields returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+      vals:
+        - [ "satsgag" ]
+
+stages:
+  - name: "When request with invalid security key header, GET /studyfields returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/studyfields"
+      method: GET
+      headers:
+        Authorization: "Bearer {wrong_token}"
+    response:
+      status_code: 401

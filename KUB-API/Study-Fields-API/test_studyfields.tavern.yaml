@@ -9,7 +9,7 @@ marks:
         - [ "CS101","computer_science" ]
 stages:
   - &auth_save_token
-    name: Login and save access token
+    name: "Login and save access token"
     request:
       url: "{tavern.env_vars.AUTH_URL}/auth/login"
       method: POST
@@ -47,7 +47,8 @@ stages:
         json:
           returned_id: id
 
-  - name: "When response with valid json body structure, GET /studyfields returns 200"
+  - &get_studyfields
+    name: "When response with valid json body structure, GET /studyfields returns 200"
     request:
       url: "{tavern.env_vars.BASE_URL}/studyfields"
       method: GET
@@ -192,25 +193,31 @@ finally:
   - *delete_studyfield
 
   - *delete_studyfield_check
-  
+
 ---
 
-test_name: When request with wrong json body data, POST /studyfields returns 422
+test_name: When request with json body that data match another user data, POST /studyfields returns 409
 
 marks:
   - parametrize:
       key:
-        - wrong_request_code
-        - wrong_request_name
         - request_code
+        - wrong_request_code
         - request_name
+        - wrong_request_name
       vals:
-        - [ "", "", "CS101", "computer_science"]
+        - [ "CS101", 
+        "12345667890123456678901234566789012345667890", 
+        "computer_science", 
+        "1234566789012345667890123456678901234566789012345667890123456678901234566789012345667890
+        1234566789012345667890123456678901234566789012345667890123456678901234566789012345667890
+        1234566789012345667890123456678901234566789012345667890123456678901234566789012345667890
+        1234566789012345667890123456678901234566789012345667890123456678901234566789012345667890"]
 
 stages:
   - *auth_save_token
 
-  - name: "When request with wrong json body data (code), POST /studyfields returns 422"
+  - name: "When request with json body that data match another user data(name), POST /studyfields returns 409"
     request:
       url: "{tavern.env_vars.BASE_URL}/studyfields"
       method: POST
@@ -223,7 +230,7 @@ stages:
     response:
       status_code: 422
 
-  - name: "When request with wrong json body data (name), POST /studyfields returns 422"
+  - name: "When request with json body that data match another user data(code), POST /studyfields returns 422"
     request:
       url: "{tavern.env_vars.BASE_URL}/studyfields"
       method: POST

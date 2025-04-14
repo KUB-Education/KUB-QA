@@ -446,3 +446,107 @@ finally:
   - *delete_studyfield
 
   - *delete_studyfield_check
+
+---
+
+test_name: When study field exists, DELETE /studyfields/id returns 204
+
+marks:
+  - parametrize:
+      key:
+        - request_code
+        - request_name
+      vals:
+        - [ "CS101","computer_science" ]
+
+stages:
+  - *auth_save_token
+  
+  - *create_studyfield_save_id
+
+  - *delete_studyfield
+
+finally:
+  - *delete_studyfield_check
+
+---
+
+test_name: When request with invalid security key header, DELETE /studyfields/id returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+        - request_code
+        - request_name
+      vals:
+        - [ "satsgag", "CS101","computer_science"]
+
+stages:
+  - *create_studyfield_save_id
+
+  - name: "When request with invalid security key header, DELETE /studyfields/id returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/studyfields/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {wrong_token}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_studyfield
+
+  - *delete_studyfield_check
+
+---
+
+test_name: When studyfield deleted, DELETE /studyfields/id returns 404
+
+marks:
+  - parametrize:
+      key:
+        - request_code
+        - request_name
+      vals:
+        - ["CS101","computer_science"]
+
+stages:
+  - *auth_save_token
+
+  - *create_studyfield_save_id
+
+finally:
+  - *delete_studyfield
+
+  - name: "When studyfield not exists, DELETE /studyfields/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/studyfields/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from studyfield that not exist, DELETE /studyfields/id returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - [ -1 ]
+
+stages:
+  - *auth_save_token
+
+  - name: "When id from studyfield that not exist, DELETE /studyfields/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/studyfields/{wrong_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 404

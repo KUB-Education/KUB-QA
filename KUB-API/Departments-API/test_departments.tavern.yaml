@@ -58,8 +58,8 @@ stages:
       headers:
         Authorization: "Bearer {returned_access_token}"
         Content-Type: "application/json"
-      json:
-        nameContains: "{request_name}"
+      params:
+        name: "{request_name}"
     response:
       status_code: 200
       verify_response_with:
@@ -255,7 +255,7 @@ stages:
 
 ---
 
-test_name: When request with invalid parameters in json body, GET /departments returns 400
+test_name: When request with invalid parameters, GET /departments returns 400
 
 marks:
  - parametrize:
@@ -266,26 +266,26 @@ marks:
 stages:
   - *auth_save_token
 
-  - name: "When request with invalid parameters in json body, GET /departments returns 400"
+  - name: "When request with invalid parameters, GET /departments returns 400"
     request:
       url: "{tavern.env_vars.BASE_URL}/departments"
       method: GET
       headers:
         Authorization: "Bearer {returned_access_token}"
         Content-Type: "application/json"
-      json:
+      params:
         email: "{request_email}"
     response:
       status_code: 400
 
 ---
 
-test_name: When request with invalid json body data, GET /departments returns 422
+test_name: When request with invalid parameters data, GET /departments returns 422
 
 marks:
   - parametrize:
       key:
-        - invalid_nameContains
+        - invalid_name
       vals:
         - [ "12345678901234567890123456789012345678901234567890123456789012345678901234567890
         12345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -295,14 +295,13 @@ marks:
 stages:
   - *auth_save_token
 
-  - name: "When request with invalid json body data, GET /departments returns 422"
+  - name: "When request with invalid parameters data, GET /departments returns 422"
     request:
       url: "{tavern.env_vars.BASE_URL}/departments"
       method: GET
       headers:
         Authorization: "Bearer {returned_access_token}"
-        Content-Type: "application/json"
-      json:
-        nameContains: "{invalid_nameContains}"
+      params:
+        name: "{invalid_name}"
     response:
       status_code: 422

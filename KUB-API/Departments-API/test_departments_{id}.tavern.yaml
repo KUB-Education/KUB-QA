@@ -26,6 +26,8 @@ stages:
       status_code: 200
       json:
         access_token: !anystr
+        refresh_token: !anystr
+        first_login: !anybool
       save:
         json:
           returned_access_token: access_token
@@ -176,6 +178,8 @@ marks:
         - [ -1 ]
 
 stages:
+  - *auth_save_token
+
   - name: "When id from department that not exist, GET /departments/id returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/departments/{wrong_id}"
@@ -202,6 +206,8 @@ marks:
         - ["Computer Science Department", "Math Department"]
 
 stages:
+  - *auth_save_token
+
   - *create_department_save_all
 
   - name: "When a request with a valid json body,
@@ -291,6 +297,8 @@ marks:
         - [ "satsgag", "Computer Science Department"]
 
 stages:
+  - *auth_save_token
+
   - *create_department_save_id
 
   - name: "When request with invalid security key header, PUT /departments returns 401"
@@ -427,6 +435,8 @@ marks:
         - [ "satsgag", "Computer Science Department"]
 
 stages:
+  - *auth_save_token
+
   - *create_department_save_id
 
   - name: "When request with invalid security key header, DELETE /departments/id returns 401"
@@ -454,7 +464,7 @@ marks:
     - department_cleanup_check_description
   - parametrize:
       key:
-        - reques_name
+        - request_name
       vals:
         - ["Computer Science Department"]
 

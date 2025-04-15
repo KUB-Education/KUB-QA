@@ -420,6 +420,31 @@ finally:
 
 ---
 
+test_name: When department exists, DELETE /department/id returns 204
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - request_name
+      vals:
+        - ["Computer Science Department"]
+
+stages:
+  - *auth_save_token
+
+  - *create_department_save_id
+
+  - *delete_department
+
+finally:
+  - *delete_department_check
+
+---
+
 test_name: When request with invalid security key header, DELETE /departments/id returns 401
 
 marks:

@@ -50,7 +50,8 @@ stages:
         json:
           returned_id: id
 
-  - name: "When response with valid json body structure, GET /departments returns 200"
+  - &get_departments
+    name: "When response with valid json body structure, GET /departments returns 200"
     request:
       url: "{tavern.env_vars.BASE_URL}/departments"
       method: GET
@@ -208,6 +209,31 @@ finally:
 
 ---
 
+test_name: When response with valid json body structure, GET /departments returns 200
+
+marks:
+  - usefixtures:
+      - department_setup_description
+      - department_cleanup_description
+      - department_cleanup_check_description
+  - parametrize:
+      key:
+        - request_name
+      vals:
+        - [ "Computer Science Department" ]
+stages:
+  - *auth_save_token
+  
+  - *create_department
+
+  - *get_departments
+
+finally:
+  - *delete_department
+
+  - *delete_department_check
+
+---
 test_name: When request with invalid security key header, GET /departments returns 401
 
 marks:

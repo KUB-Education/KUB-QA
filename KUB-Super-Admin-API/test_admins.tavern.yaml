@@ -204,7 +204,7 @@ stages:
 
 ---
 
-test_name: When request with json body that data match another user data, POST admin returns 409
+test_name: When request with json body that data match another user data, POST /admins returns 409
 
 marks:
   - usefixtures:
@@ -223,7 +223,7 @@ marks:
 stages:
   - *create_admin
 
-  - name: "When request with json body that data match another user data, POST admin returns 409"
+  - name: "When request with json body that data match another user data, POST /admins returns 409"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins"
       method: POST

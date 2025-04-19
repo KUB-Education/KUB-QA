@@ -20,15 +20,6 @@ stages:
       save:
         json:
           token: refresh_token
-#      verify_response_with:
-#        function: tavern.helpers:validate_jwt
-#        extra_kwargs:
-#          jwt_key: "access_token"
-#          key: "{tavern.env_vars.JWT_SECRET}"
-#          algorithms: "HS256"
-#          options:
-#            verify_signature: true
-#            verify_aud: false
 
   - name: "When refresh token is valid, POST auth/refresh returns 200"
     request:
@@ -47,7 +38,6 @@ stages:
         json:
           token: access_token
 
-finally:
   - &logout
     name: "When response with valid bearer token, POST auth/logout returns 204"
     request:
@@ -82,7 +72,6 @@ stages:
 ---
 
 test_name: When request is made after logout, POST auth/refresh returns 401
-
 
 stages:
   - *login

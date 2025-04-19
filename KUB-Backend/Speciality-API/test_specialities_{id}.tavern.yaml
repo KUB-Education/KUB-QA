@@ -1,0 +1,475 @@
+test_name: When request is made, GET /specialties/id returns 200 and a json body that matches created specialty
+
+marks:
+  - parametrize:
+      key:
+        - request_specialty_code
+        - request_specialty_name
+        - returned_study_field_id
+      vals:
+        - [ "12", "Інформаційні технології", "1" ]
+
+stages:
+  - &create_specialty_save_all
+    name: "When specialty json request is valid, POST /specialties return 201"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties"
+      method: POST
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+      json:
+        code: "{request_specialty_code}"
+        name: "{request_specialty_name}"
+        study_field_id: "{returned_study_field_id}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        code: "{request_specialty_code}"
+        name: "{request_specialty_name}"
+        field_of_study_name: !anystr
+      save:
+        json:
+          returned_specialty_id: id
+          returned_code: code
+          returned_name: name
+          returned_field_of_study_name: field_of_study_name
+
+  - name: "When request is made,
+            GET /specialties/id returns 200 and a json body that matches created specialty"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{returned_specialty_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 200
+      json:
+        id: !int "{returned_specialty_id:d}"
+        code: "{returned_code}"
+        name: "{returned_name}"
+        field_of_study_name: "{returned_field_of_study_name}"
+
+finally:
+  - &delete_specialty
+    name: "When specialty exists, DELETE /specialties/id returns 204"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{returned_specialty_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 204
+
+  - &delete_specialty_check
+    name: "When specialty deleted, GET /specialties/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{returned_specialty_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name:  When a request with a valid json body, PUT /specialties/id returns 200 and a json body that matches request
+
+marks:
+  - parametrize:
+      key:
+        - request_specialty_code
+        - request_specialty_name
+        - returned_study_field_id
+        - update_specialty_code
+        - update_specialty_name
+        - update_study_field_id
+      vals:
+        - [ "12", "Інформаційні технології", "1", "13", "Test", "2"]
+
+stages:
+  - *create_specialty_save_all
+
+  - name: "When a request with a valid json body,
+            PUT /specialties/id returns 200 and a json body that matches request"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{returned_specialty_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+      json:
+        code: "{update_specialty_code}"
+        name: "{update_specialty_name}"
+        study_field_id: "{update_study_field_id}"
+    response:
+      status_code: 200
+      json:
+        id: !int "{returned_specialty_id:d}"
+        code: "{update_specialty_code}"
+        name: "{update_specialty_name}"
+        field_of_study_name: !anystr
+
+  - name: "When request is made,
+            GET /specialties/id returns 200 and a json body that matches updated specialty"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{returned_specialty_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 200
+      json:
+        id: !int "{returned_specialty_id:d}"
+        code: "{update_specialty_code}"
+        name: "{update_specialty_name}"
+        field_of_study_name: !anystr
+
+finally:
+  - *delete_specialty
+
+  - *delete_specialty_check
+
+---
+
+test_name: When request without json body, PUT/specialties/id returns 400
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+        - request_specialty_code
+        - request_specialty_name
+        - returned_study_field_id
+      vals:
+        - [ "asfasf", "12", "Інформаційні технології", "1"]
+
+stages:
+  - &create_specialty_save_id
+    name: "When a request with a valid json body,
+              POST /specialties/id returns 201 and a json body that matches the request"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties"
+      method: POST
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+      json:
+        code: "{request_specialty_code}"
+        name: "{request_specialty_name}"
+        study_field_id: "{returned_study_field_id}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        code: "{request_specialty_code}"
+        name: "{request_specialty_name}"
+        field_of_study_name: !anystr
+      save:
+        json:
+          returned_specialty_id: id
+
+  - name: "When request without json body, PUT/specialties/id returns 400"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{returned_specialty_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+    response:
+      status_code: 400
+
+finally:
+  - *delete_specialty
+
+  - *delete_specialty_check
+
+---
+
+test_name: When admin deleted, GET /specialties/{id} returns 404
+
+marks:
+  - parametrize:
+      key:
+        - request_specialty_code
+        - request_specialty_name
+        - returned_study_field_id
+      vals:
+        - [ "12", "Інформаційні технології", "1" ]
+
+stages:
+  - *create_specialty_save_id
+
+finally:
+  - *delete_specialty
+
+  - *delete_specialty_check
+
+---
+
+test_name: When admin not exists, PUT /specialties/id returns 404
+
+marks:
+  - parametrize:
+      key:
+        - request_specialty_code
+        - request_specialty_name
+        - returned_study_field_id
+      vals:
+        - [ "12", "Інформаційні технології", "1" ]
+
+stages:
+  - *create_specialty_save_id
+
+finally:
+  - *delete_specialty
+
+  - name: "When admin not exists, PUT /specialties/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{returned_specialty_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+      json:
+        code: "{request_specialty_code}"
+        name: "{request_specialty_name}"
+        study_field_id: "{returned_study_field_id}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When admin deleted, DELETE /specialties/{id} returns 404
+
+marks:
+  - parametrize:
+      key:
+        - request_specialty_code
+        - request_specialty_name
+        - returned_study_field_id
+      vals:
+        - [ "12", "Інформаційні технології", "1" ]
+
+stages:
+  - *create_specialty_save_id
+
+finally:
+  - *delete_specialty
+
+  - name: "When admin not exists, DELETE /specialties/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{returned_specialty_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from admin what not exist, GET /specialties/{id} returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - [ -1 ]
+
+stages:
+  - name: "When id from admin what not exist, GET /specialties/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{wrong_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from admin what not exist, PUT /specialties/{id} returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+        - request_specialty_code
+        - request_specialty_name
+        - returned_study_field_id
+      vals:
+        - [ -1, "12", "Інформаційні технології", "1" ]
+
+stages:
+  - name: "When id from admin what not exist, PUT /specialties/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{wrong_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+      json:
+        code: "{request_specialty_code}"
+        name: "{request_specialty_name}"
+        study_field_id: "{returned_study_field_id}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from admin what not exist, DELETE /specialties/{id} returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - [ -1 ]
+
+stages:
+  - name: "When id from admin what not exist, DELETE /specialties/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{wrong_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When request with invalid security key header, GET /specialties/id returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+        - request_specialty_code
+        - request_specialty_name
+        - returned_study_field_id
+      vals:
+        - [ -1, "12", "Інформаційні технології", "1" ]
+
+stages:
+  - *create_specialty_save_id
+
+  - name: "When request with invalid security key header, GET /specialties/id returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{returned_specialty_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {wrong_token}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_specialty
+
+  - *delete_specialty_check
+
+---
+
+test_name: When request with invalid security key header, PUT /specialties returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+        - request_specialty_code
+        - request_specialty_name
+        - returned_study_field_id
+      vals:
+        - [ -1, "12", "Інформаційні технології", "1" ]
+
+stages:
+  - *create_specialty_save_id
+
+  - name: "When request with invalid security key header, PUT /specialties returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{returned_specialty_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {wrong_token}"
+        Content-Type: "application/json"
+      json:
+        code: "{request_specialty_code}"
+        name: "{request_specialty_name}"
+        study_field_id: "{returned_study_field_id}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_specialty
+
+  - *delete_specialty_check
+
+---
+
+test_name: When request with invalid security key header, DELETE /specialties returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+        - request_specialty_code
+        - request_specialty_name
+        - returned_study_field_id
+      vals:
+        - [ -1, "12", "Інформаційні технології", "1" ]
+
+stages:
+  - *create_specialty_save_id
+
+  - name: "When request with invalid security key header, DELETE /specialties returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{returned_specialty_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {wrong_token}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_specialty
+
+  - *delete_specialty_check
+
+---
+
+test_name: When request with wrong json body data, PUT /specialties/id returns 422
+
+marks:
+  - parametrize:
+      key:
+        - request_specialty_code
+        - request_specialty_name
+        - returned_study_field_id
+        - wrong_request_specialty_code
+        - wrong_request_specialty_name
+        - wrong_study_field_id
+      vals:
+        - [ "12", "Інформаційні технології", "1", "safsdfasf", "gadhaha", "-1" ]
+
+stages:
+  - *create_specialty_save_id
+
+  - name: "When request with wrong json body data, PUT /specialties/id returns 422"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/specialties/{returned_specialty_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+      json:
+        code: "{wrong_request_specialty_code}"
+        name: "{wrong_request_specialty_name}"
+        study_field_id: "{wrong_study_field_id}"
+    response:
+      status_code: 422
+
+finally:
+  - *delete_specialty
+
+  - *delete_specialty_check

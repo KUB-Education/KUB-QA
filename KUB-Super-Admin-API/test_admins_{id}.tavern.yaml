@@ -89,7 +89,7 @@ finally:
 
 ---
 
-test_name:  When a request with a valid json body, PUT returns 200 and a json body that matches request
+test_name:  When a request with a valid json body, PUT /admins/id returns 200 and a json body that matches request
 
 marks:
   - usefixtures:
@@ -113,7 +113,7 @@ stages:
   - *create_admin_save_all
 
   - name: "When a request with a valid json body,
-            PUT returns 200 and a json body that matches request"
+            PUT /admins/id returns 200 and a json body that matches request"
     request:
       url: "{tavern.env_vars.BASE_URL}/admins/{returned_id}"
       method: PUT
@@ -249,7 +249,7 @@ finally:
 
 ---
 
-test_name: Test PUT method for Not Found error when admin deleted
+test_name: When admin not exists, PUT /admins/id returns 404
 
 marks:
   - usefixtures:

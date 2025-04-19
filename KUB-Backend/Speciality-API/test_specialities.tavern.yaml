@@ -3,35 +3,13 @@ test_name: When response with valid json body structure, GET /specialties return
 marks:
   - parametrize:
       key:
-        #- request_study_field_code
-        #- request_study_field_name
         - request_specialty_code
         - request_specialty_name
         - returned_study_field_id
       vals:
         - [ "12", "Інформаційні технології", "1" ]
-        #- [ "12", "Інформаційні технології", "121", "Інженерія програмного забезпечення" ]
 
 stages:
-#  - name: "When study field json request is valid, POST /studyfields return 201"
-#    request:
-#      url: "{tavern.env_vars.BASE_URL}/studyfields"
-#      method: POST
-#      headers:
-#        Content-Type: "application/json"
-#        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
-#      json:
-#        code: "{request_study_field_code}"
-#        name: "{request_study_field_name}"
-#    response:
-#      status_code: 201
-#      json:
-#        id: !anyint
-#        code: "{request_study_field_code}"
-#        name: "{request_study_field_name}"
-#      save:
-#        json:
-#          returned_study_field_id: id
 
   - &create_specialty
     name: "When specialty json request is valid, POST /specialties return 201"
@@ -52,7 +30,6 @@ stages:
         code: "{request_specialty_code}"
         name: "{request_specialty_name}"
         field_of_study_name: !anystr
-        #study_field_name:  !anystr #"{request_study_field_name}"
       save:
         json:
           returned_specialty_id: id
@@ -110,15 +87,6 @@ finally:
        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
     response:
       status_code: 404
-
-#  - name: "When study field exists, DELETE /studyfields/id returns 204"
-#    request:
-#      url: "{tavern.env_vars.BASE_URL}/studyfields/{returned_study_field_id}"
-#      method: DELETE
-#      headers:
-#        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
-#    response:
-#      status_code: 204
 
 ---
 

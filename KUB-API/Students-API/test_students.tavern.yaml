@@ -1,0 +1,309 @@
+test_name: When request with valid json body, POST /students returns 201
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "", "john.doe@example.com"]
+stages:
+  - &auth_save_token
+    name: "Login and save access token"
+    request:
+      url: "{tavern.env_vars.AUTH_URL}/auth/login"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+      json:
+        email: "{tavern.env_vars.ADMIN_EMAIL}"
+        password: "{tavern.env_vars.ADMIN_PASSWORD}"
+    response:
+      status_code: 200
+      json:
+        access_token: !anystr
+        refresh_token: !anystr
+        first_login: !anybool
+      save:
+        json:
+          returned_access_token: access_token
+
+  - &create_student
+    name: "When request with valid json body, POST /students returns 201"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint 
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+      save:
+        json:
+          returned_id: id
+
+  - &get_students
+    name: "When response with valid json body structure, GET /students returns 200"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students"
+      method: GET
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: tavern.helpers:validate_pykwalify
+          #Check response for valid schema according to openapi spec
+          #validate_pykwalify used to validate more complicated JSON schemas
+        extra_kwargs:
+          schema:
+            type: seq
+            required: True
+            matching: "all"
+            sequence:
+              - type: map
+                mapping:
+                  id:
+                    type: int
+                    required: True
+                  last_name:
+                    type: str
+                    required: True
+                  first_name:
+                    type: str
+                    required: True
+                  middle_name:
+                    type: str
+                    required: True
+                  email:
+                    type: str
+                    required: True
+                  user_status:
+                    type: str
+                    required: True
+
+finally:
+  - &delete_student
+    name: "When study field exists, DELETE /students/id returns 204"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 204
+
+  - &delete_student_check
+    name: "When study field deleted, GET /students/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students/{returned_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When request wrong request parameters in json body, POST /students returns 400
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "", "john.doe@example.com"]
+stages:
+  - *auth_save_token
+
+  - name: "When request without json body, POST /students returns 400"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+    response:
+      status_code: 400
+
+  - name: "When request with missing parameters in json body, POST /students returns 400"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students"
+      method: POST
+      headers:
+        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+    response:
+      status_code: 400
+
+---
+
+test_name: When request with invalid security key header, POST /students returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "satsgag",  "Doe", "John", "", "john.doe@example.com" ]
+
+stages:
+  - name: "When request with invalid security key header, POST /students returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students"
+      method: POST
+      headers:
+        Authorization: "Bearer {wrong_token}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 401
+
+---
+
+test_name: When request with json body that data match another student data, POST /students returns 409
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "", "john.doe@example.com"]
+
+stages:
+  - *auth_save_token
+  
+  - *create_student
+
+  - name: "When request with json body that data match another student data, POST /students returns 409"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 409
+
+finally:
+  - *delete_student
+
+  - *delete_student_check
+
+--- 
+
+---
+
+test_name: When request with invalid data in json body, POST /students returns 422
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - wrong_request_too_long
+        - wrong_request_email
+      vals:
+        - [  "Doe", "John", "", "john.doe@example.com", "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii", "john.doe.example.com"]
+
+stages:
+  - *auth_save_token
+
+  - name: "When request with invalid data in json body (last_name), POST /students returns 422"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{wrong_request_too_long}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 422
+
+  - name: "When request with invalid data in json body (first_name), POST /students returns 422"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{wrong_request_too_long}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 422
+
+  - name: "When request with invalid data in json body (middle_name), POST /students returns 422"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{wrong_request_too_long}"
+        email: "{request_email}"
+    response:
+      status_code: 422
+  
+  - name: "When request with invalid data in json body (email), POST /students returns 422"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{wrong_request_email}"
+    response:
+      status_code: 422

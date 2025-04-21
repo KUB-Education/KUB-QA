@@ -98,7 +98,7 @@ stages:
 
 finally:
   - &delete_student
-    name: "When study field exists, DELETE /students/id returns 204"
+    name: "When student exists, DELETE /students/id returns 204"
     request:
       url: "{tavern.env_vars.BASE_URL}/students/{returned_id}"
       method: DELETE
@@ -108,7 +108,7 @@ finally:
       status_code: 204
 
   - &delete_student_check
-    name: "When study field deleted, GET /students/id returns 404"
+    name: "When student deleted, GET /students/id returns 404"
     request:
       url: "{tavern.env_vars.BASE_URL}/students/{returned_id}"
       method: GET
@@ -138,7 +138,7 @@ stages:
       url: "{tavern.env_vars.BASE_URL}/students"
       method: POST
       headers:
-        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Authorization: "Bearer {returned_access_token}"
         Content-Type: "application/json"
     response:
       status_code: 400
@@ -148,7 +148,7 @@ stages:
       url: "{tavern.env_vars.BASE_URL}/students"
       method: POST
       headers:
-        X-SUPER-ADMIN-KEY: "{tavern.env_vars.TOKEN}"
+        Authorization: "Bearer {returned_access_token}"
         Content-Type: "application/json"
       json:
         last_name: "{request_last_name}"
@@ -229,8 +229,6 @@ finally:
 
 --- 
 
----
-
 test_name: When request with invalid data in json body, POST /students returns 422
 
 marks:
@@ -307,3 +305,50 @@ stages:
         email: "{wrong_request_email}"
     response:
       status_code: 422
+
+---
+
+test_name: When response with valid json body structure, GET /students returns 200
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "", "john.doe@example.com"]
+
+stages:
+  - *auth_save_token
+  
+  - *create_student
+
+  - *get_students
+
+finally:
+  - *delete_student
+
+  - *delete_student_check
+
+--- 
+
+test_name: When request with invalid security key header, GET /students returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+      vals:
+        - [ "satsgag" ]
+
+stages:
+  - name: "When request with invalid security key header, GET /students returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students"
+      method: GET
+      headers:
+        Authorization: "Bearer {wrong_token}"
+    response:
+      status_code: 401

@@ -1,0 +1,163 @@
+test_name: When request valid, POST /students/id/resend returns 200
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "", "john.doe@example.com"]
+stages:
+  - &auth_save_token
+    name: "Login and save access token"
+    request:
+      url: "{tavern.env_vars.AUTH_URL}/auth/login"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+      json:
+        email: "{tavern.env_vars.ADMIN_EMAIL}"
+        password: "{tavern.env_vars.ADMIN_PASSWORD}"
+    response:
+      status_code: 200
+      json:
+        access_token: !anystr
+        refresh_token: !anystr
+        first_login: !anybool
+      save:
+        json:
+          returned_access_token: access_token
+
+  - &create_student_save_id
+    name: "When request with valid json body, POST /students returns 201"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint 
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+      save:
+        json:
+          returned_id: id
+
+  - name: "When request valid, POST /students/id/resend returns 200"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students/{returned_id}/resend"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 200
+      json:
+        id: !anyint 
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+
+finally:
+  - &delete_student
+    name: "When student exists, DELETE /students/id returns 204"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 204
+
+  - &delete_student_check
+    name: "When student deleted, GET /students/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students/{returned_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 404
+
+--- 
+
+test_name: When request with invalid security key header, POST /students/id/resend returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "satsgag", "Doe", "John", "", "john.doe@example.com"]
+stages:
+  - *auth_save_token
+
+  - *create_student_save_id
+  
+  - name: " When request with invalid security key header, POST /students/id/resend returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students/{returned_id}/resend"
+      method: POST
+      headers:
+        Authorization: "Bearer {wrong_token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_student
+
+  - *delete_student_check
+
+---
+
+test_name: When student not found, POST /students/id/resend returns 404
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ "Doe", "John", "", "john.doe@example.com"]
+
+stages:
+  - *auth_save_token
+
+  - *create_student_save_id
+  
+  - *delete_student
+
+  - name: "When student not found, POST /students/id/resend returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students/{returned_id}/resend"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 404
+      
+finally:
+
+  - *delete_student_check
+

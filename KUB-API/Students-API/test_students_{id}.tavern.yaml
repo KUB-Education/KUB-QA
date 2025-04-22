@@ -521,3 +521,119 @@ finally:
   - *delete_student
 
   - *delete_student_check
+
+---
+
+test_name: When student exists, DELETE /students/id returns 204
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - ["Doe", "John", "", "john.doe@example.com"]
+
+stages:
+  - *auth_save_token
+
+  - *create_student_save_id
+
+  - *delete_student
+
+finally:
+  - *delete_student_check
+
+---
+
+test_name: When request with invalid security key header, DELETE /students/id returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - ["satsgag", "Doe", "John", "", "john.doe@example.com"]
+
+stages:
+  - *auth_save_token
+  
+  - *create_student_save_id
+
+  - name: "When request with invalid security key header, DELETE /students/id returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {wrong_token}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_student
+
+  - *delete_student_check
+
+---
+
+test_name: When student deleted, DELETE /students/id returns 404
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - ["Doe", "John", "", "john.doe@example.com"]
+
+stages:
+  - *auth_save_token
+
+  - *create_student_save_id
+
+finally:
+  - *delete_student
+
+  - name: "When student not exists, DELETE /students/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from student that not exist, DELETE /students/id returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+      vals:
+        - [ -1 ,"Doe", "John", "", "john.doe@example.com"]
+
+stages:
+  - *auth_save_token
+
+  - name: "When id from student that not exist, DELETE /students/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/students/{wrong_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 404

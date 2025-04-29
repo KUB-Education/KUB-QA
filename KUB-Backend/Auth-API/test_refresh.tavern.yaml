@@ -1,0 +1,89 @@
+test_name: When refresh token is valid, POST auth/refresh returns 200
+
+stages:
+  - &login
+    name: "When response with valid json body, POST auth/login returns 200"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/auth/login"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+      json:
+        email: "{tavern.env_vars.EMAIL}"
+        password: "{tavern.env_vars.PASSWORD}"
+    response:
+      status_code: 200
+      json:
+        access_token: !anystr
+        refresh_token: !anystr
+        first_login: !anybool
+      save:
+        json:
+          token: refresh_token
+
+  - name: "When refresh token is valid, POST auth/refresh returns 200"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/auth/refresh"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+      json:
+        refresh_token: "{token}"
+    response:
+      status_code: 200
+      json:
+        access_token: !anystr
+        refresh_token: !anystr
+      save:
+        json:
+          token: access_token
+
+  - &logout
+    name: "When response with valid bearer token, POST auth/logout returns 204"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/auth/logout"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+    response:
+      status_code: 204
+
+---
+
+test_name: When request with invalid refresh token, POST auth/refresh returns 400
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+      vals:
+        - [ "satsgag" ]
+
+stages:
+  - name: "When request with invalid bearer token, POST /auth/refresh returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/auth/refresh"
+      method: POST
+      headers:
+        Authorization: "Bearer {wrong_token}"
+    response:
+      status_code: 401
+
+---
+
+test_name: When request is made after logout, POST auth/refresh returns 401
+
+stages:
+  - *login
+
+finally:
+  - *logout
+
+  - name: "When request is made after logout, POST auth/refresh returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/auth/refresh"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+    response:
+      status_code: 401

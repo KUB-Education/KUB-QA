@@ -1,0 +1,70 @@
+test_name: When response with valid json body, POST auth/login returns 200
+
+stages:
+  - name: "When response with valid json body, POST auth/login returns 200"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/auth/login"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+      json:
+        email: "{tavern.env_vars.EMAIL}"
+        password: "{tavern.env_vars.PASSWORD}"
+    response:
+      status_code: 200
+      json:
+        access_token: !anystr
+        refresh_token: !anystr
+        first_login: !anybool
+      save:
+        json:
+          token: access_token
+
+finally:
+  - name: "When response with valid bearer token, POST auth/logout returns 204"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/auth/logout"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+    response:
+      status_code: 204
+
+---
+
+test_name: When request without json body, POST auth/login returns 400
+
+stages:
+  - name: "When request without json body, POST /auth/login returns 400"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/auth/login"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+    response:
+      status_code: 400
+
+---
+
+test_name: When request with bearer token, POST auth/login returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+      vals:
+        - [ "satsgag" ]
+
+stages:
+  - name: "When request with bearer token, POST /auth/login returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/auth/login"
+      method: POST
+      headers:
+        Authorization: "Bearer {wrong_token}"
+        Content-Type: "application/json"
+      json:
+        email: "{tavern.env_vars.EMAIL}"
+        password: "{tavern.env_vars.PASSWORD}"
+    response:
+      status_code: 401

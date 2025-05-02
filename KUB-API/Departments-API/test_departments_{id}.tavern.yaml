@@ -1,0 +1,534 @@
+test_name: When request is made, GET /departments/id returns 200 and a json body that matches created department
+
+marks:
+  - usefixtures:
+      - department_setup_description
+      - department_cleanup_description
+      - department_cleanup_check_description
+  - parametrize:
+      key:
+        - request_name
+      vals:
+        - [ "Computer Science Department" ]
+
+stages:
+  - &auth_save_token
+    name: Login and save access token
+    request:
+      url: "{tavern.env_vars.AUTH_URL}/auth/login"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+      json:
+        email: "{tavern.env_vars.ADMIN_EMAIL:}"
+        password: "{tavern.env_vars.ADMIN_PASSWORD}"
+    response:
+      status_code: 200
+      json:
+        access_token: !anystr
+        refresh_token: !anystr
+        first_login: !anybool
+      save:
+        json:
+          returned_access_token: access_token
+            
+  - &create_department_save_all
+    name: "{department_setup_description}"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        name: "{request_name}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        name: "{request_name}"
+      save:
+        json:
+          returned_id: id
+          returned_name: name
+
+  - name: "When request is made,
+            GET /departments/id returns 200 and a json body that matches created department"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 200
+      json:
+        id: !int "{returned_id:d}"
+        name: "{returned_name}"
+
+
+finally:
+  - &delete_department
+    name: "{department_cleanup_description}"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 204
+
+  - &delete_department_check
+    name: "department_cleanup_check_description"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 404
+
+
+---
+
+test_name: When request with invalid security key header, GET /departments/id returns 401
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - wrong_token
+        - request_name
+      vals:
+        - [ "satsgag", "Computer Science Department" ]
+
+stages:
+  - *auth_save_token
+
+  - &create_department_save_id
+    name: "When a request with a valid json body,
+              POST /departments/id returns 201 and a json body that matches the request"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        name: "{request_name}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        name: "{request_name}"
+      save:
+        json:
+          returned_id: id
+
+  - name: "When request with invalid security key header, GET /departments/id returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {wrong_token}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_department
+
+  - *delete_department_check
+  
+---
+
+test_name: When department deleted, GET /departments/id returns 404
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - request_name
+      vals:
+        - ["Computer Science Department"]
+
+stages:
+  - *auth_save_token
+
+  - *create_department_save_id
+
+finally:
+  - *delete_department
+
+  - *delete_department_check
+
+---
+
+test_name: When id from department that not exist, GET /departments/id returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - [ -1 ]
+
+stages:
+  - *auth_save_token
+
+  - name: "When id from department that not exist, GET /departments/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{wrong_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 404
+
+---
+
+test_name:  When a request with a valid json body, PUT /departments/id returns 200 and a json body that matches request
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - request_name
+        - update_name
+      vals:
+        - ["Computer Science Department", "Math Department"]
+
+stages:
+  - *auth_save_token
+
+  - *create_department_save_all
+
+  - name: "When a request with a valid json body,
+            PUT /departments/id returns 200 and a json body that matches request"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        name: "{update_name}"
+    response:
+      status_code: 200
+      json:
+        id: !int "{returned_id:d}"
+        name: "{update_name}"
+
+  - name: "When request is made,
+            GET /departments/id returns 200 and a json body that matches updated department"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 200
+      json:
+        id: !int "{returned_id:d}"
+        name: "{update_name}"
+    
+
+finally:
+  - *delete_department
+
+  - *delete_department_check
+
+---
+
+test_name: When request without json body, PUT /departments/id returns 400
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - request_name
+      vals:
+        - ["Computer Science Department"]
+
+stages:
+  - *auth_save_token
+
+  - *create_department_save_id
+
+  - name: "When request without json body, PUT /departments/id returns 400"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 400
+
+finally:
+  - *delete_department
+
+  - *delete_department_check
+
+---
+
+test_name: When request with invalid security key header, PUT /departments/id returns 401
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - wrong_token
+        - request_name
+      vals:
+        - [ "satsgag", "Computer Science Department"]
+
+stages:
+  - *auth_save_token
+
+  - *create_department_save_id
+
+  - name: "When request with invalid security key header, PUT /departments returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {wrong_token}"
+        Content-Type: "application/json"
+      json:
+        name: "{request_name}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_department
+
+  - *delete_department_check
+
+---
+
+test_name: When department deleted, PUT /departments/id returns 404
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - request_name
+      vals:
+        - ["Computer Science Department"]
+
+stages:
+  - *auth_save_token
+
+  - *create_department_save_id
+
+finally:
+  - *delete_department
+
+  - name: "When department deleted, PUT /departments/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        name: "{request_name}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from department that not exist, PUT /departments/id returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+        - update_name
+      vals:
+        - [ -1, "Computer Science Department"]
+
+stages:
+  - *auth_save_token
+
+  - name: "When id from department that not exist, PUT /departments/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{wrong_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        name: "{update_name}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When request with wrong json body data, PUT /departments/id returns 422
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - request_name
+        - wrong_request_name
+      vals:
+        - ["Computer Science Department", ""]
+
+stages:
+  - *auth_save_token
+
+  - *create_department_save_id
+
+  - name: "When request with wrong json body data, PUT /departments/id returns 422"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: PUT
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        name: "{wrong_request_name}"
+    response:
+      status_code: 422
+
+finally:
+  - *delete_department
+
+  - *delete_department_check
+
+---
+
+test_name: When department exists, DELETE /department/id returns 204
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - request_name
+      vals:
+        - ["Computer Science Department"]
+
+stages:
+  - *auth_save_token
+
+  - *create_department_save_id
+
+  - *delete_department
+
+finally:
+  - *delete_department_check
+
+---
+
+test_name: When request with invalid security key header, DELETE /departments/id returns 401
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - wrong_token
+        - request_name
+      vals:
+        - [ "satsgag", "Computer Science Department"]
+
+stages:
+  - *auth_save_token
+
+  - *create_department_save_id
+
+  - name: "When request with invalid security key header, DELETE /departments/id returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {wrong_token}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_department
+
+  - *delete_department_check
+
+---
+
+test_name: When department deleted, DELETE /departments/id returns 404
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - request_name
+      vals:
+        - ["Computer Science Department"]
+
+stages:
+  - *auth_save_token
+
+  - *create_department_save_id
+
+finally:
+  - *delete_department
+
+  - name: "When department not exists, DELETE /departments/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from department that not exist, DELETE /departments/id returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - [ -1 ]
+
+stages:
+  - *auth_save_token
+
+  - name: "When id from department that not exist, DELETE /departments/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{wrong_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 404

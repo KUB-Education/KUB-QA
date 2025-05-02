@@ -1,0 +1,254 @@
+test_name: When request with valid json body, POST /departments returns 201
+
+marks:
+  - usefixtures:
+      - department_setup_description
+      - department_cleanup_description
+      - department_cleanup_check_description
+  - parametrize:
+      key:
+        - request_name
+      vals:
+        - [ "Computer Science Department" ]
+stages:
+  - &auth_save_token
+    name: Login and save access token
+    request:
+      url: "{tavern.env_vars.AUTH_URL}/auth/login"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+      json:
+        email: "{tavern.env_vars.ADMIN_EMAIL}"
+        password: "{tavern.env_vars.ADMIN_PASSWORD}"
+    response:
+      status_code: 200
+      json:
+        access_token: !anystr
+        refresh_token: !anystr
+        first_login: !anybool
+      save:
+        json:
+          returned_access_token: access_token
+
+  - &create_department
+    name: "{department_setup_description}"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        name: "{request_name}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint 
+        name: "{request_name}"
+      save:
+        json:
+          returned_id: id
+
+  - &get_departments
+    name: "When response with valid json body structure, GET /departments returns 200"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments"
+      method: GET
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      params:
+        name: "{request_name}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: tavern.helpers:validate_pykwalify
+          #Check response for valid schema according to openapi spec
+          #validate_pykwalify used to validate more complicated JSON schemas
+        extra_kwargs:
+          schema:
+            type: seq
+            required: True
+            matching: "all"
+            sequence:
+              - type: map
+                mapping:
+                  id:
+                    type: int
+                    required: True
+                  name:
+                    type: str
+                    required: True
+
+finally:
+  - &delete_department
+    name: "{department_cleanup_description}"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 204
+
+  - &delete_department_check
+    name: "department_cleanup_check_description"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments/{returned_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When request without json body, POST /departments returns 400
+
+stages:
+  - *auth_save_token
+
+  - name: "When request without json body, POST /departments returns 400"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 400
+
+---
+
+test_name: When request with invalid security key header, POST /departments returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+        - request_name
+      vals:
+        - [ "satsgag", "Computer Science Department" ]
+
+stages:
+  - name: "When request with invalid security key header, POST /departments returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments"
+      method: POST
+      headers:
+        Authorization: "Bearer {wrong_token}"
+        Content-Type: "application/json"
+      json:
+        name: "{request_name}"
+    response:
+      status_code: 401
+
+---
+
+test_name: When request with wrong json body data, POST /departments returns 422
+
+marks:
+  - parametrize:
+      key:
+        - wrong_request_name
+      vals:
+        - [ "" ]
+
+stages:
+  - *auth_save_token
+
+  - name: "When request with wrong json body data, POST /departments returns 422"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        name: "{wrong_request_name}"
+    response:
+      status_code: 422
+
+---
+
+test_name: When request with json body that data match another user data, POST /departments returns 409
+
+marks:
+  - usefixtures:
+    - department_setup_description
+    - department_cleanup_description
+    - department_cleanup_check_description
+  - parametrize:
+      key:
+        - request_name
+      vals:
+        - [ "Computer Science Department"  ]
+
+stages:
+  - *auth_save_token
+  
+  - *create_department
+
+  - name: "When request with json body that data match another user data, POST /departments returns 409"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments"
+      method: POST
+      headers:
+        Authorization: "Bearer {returned_access_token}"
+        Content-Type: "application/json"
+      json:
+        name: "{request_name}"
+    response:
+      status_code: 409
+
+finally:
+  - *delete_department
+
+  - *delete_department_check
+
+---
+
+test_name: When response with valid json body structure, GET /departments returns 200
+
+marks:
+  - usefixtures:
+      - department_setup_description
+      - department_cleanup_description
+      - department_cleanup_check_description
+  - parametrize:
+      key:
+        - request_name
+      vals:
+        - [ "Computer Science Department" ]
+stages:
+  - *auth_save_token
+  
+  - *create_department
+
+  - *get_departments
+
+finally:
+  - *delete_department
+
+  - *delete_department_check
+
+---
+test_name: When request with invalid security key header, GET /departments returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+      vals:
+        - [ "satsgag" ]
+
+stages:
+  - name: "When request with invalid security key header, GET /departments returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/departments"
+      method: GET
+      headers:
+        Authorization: "Bearer {wrong_token}"
+    response:
+      status_code: 401

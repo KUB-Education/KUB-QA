@@ -1,0 +1,613 @@
+test_name: When request is made, GET /lecturers/id returns 200 and a json body that matches created lecturer
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - request_department_id
+        - request_academic_title
+        - request_position
+        - request_status
+      vals:
+        - [ "Doe", "John", "", "john.doe@example.com", 101, "DOCTOR_OF_PHILOSOPHY", "ASSISTANT", "ACTIVE" ]
+
+stages:
+  - &create_lecturer_save_all
+    name: "When lecturer json request is valid, POST /lecturers return 201"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers"
+      method: POST
+      headers:
+        Authorization : "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+        department_id: "{request_department_id}"
+        academic_title: "{request_academic_title}"
+        position: "{request_position}"
+        status: "{request_status}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: !anything
+        email: "{request_email}"
+        user_status: !anystr
+        department_name: !anystr
+        academic_title: "{request_academic_title}"
+        position: "{request_position}"
+        status: "{request_status}"
+      save:
+        json:
+          returned_id: id
+          returned_last_name: last_name
+          returned_first_name: first_name
+          returned_middle_name: middle_name
+          returned_email: email
+          returned_user_status: user_status
+          returned_department_name: department_name
+          returned_academic_title: academic_title
+          returned_position: position
+          returned_status: status
+
+  - name: "When request is made,
+            GET /lecturers/id returns 200 and a json body that matches created lecturer"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{returned_id}"
+      method: GET
+      headers:
+        Authorization : "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 200
+      json:
+        id: !int "{returned_id:d}"
+        last_name: "{returned_last_name}"
+        first_name: "{returned_first_name}"
+        middle_name: !anything
+        email: "{returned_email}"
+        user_status: "{returned_user_status}"
+        department_name: "{returned_department_name}"
+        academic_title: "{returned_academic_title}"
+        position: "{returned_position}"
+        status: "{returned_status}"
+
+finally:
+  - &delete_lecturer
+    name: "When lecturer exists, DELETE /lecturers/id returns 204"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization : "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 204
+
+  - &delete_lecturer_check
+    name:  "When lecturer deleted, GET /lecturers/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{returned_id}"
+      method: GET
+      headers:
+        Authorization : "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name:  When a request with a valid json body, PUT /lecturers/id returns 200 and a json body that matches request
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - request_department_id
+        - request_academic_title
+        - request_position
+        - request_status
+        - update_last_name
+        - update_first_name
+        - update_middle_name
+        - update_email
+        - update_department_id
+        - update_academic_title
+        - update_position
+        - update_status
+      vals:
+        - [ "Doe", "John", "", "john.doe@example.com", 101, "DOCTOR_OF_PHILOSOPHY", "ASSISTANT", "ACTIVE",
+            "Smith", "Alice", "", "alice.smith@example.com", 101, "DOCTOR_OF_SCIENCE", "PROFESSOR", "ACTIVE"]
+
+stages:
+  - &create_lecturer_save_id
+    name: "When lecturer json request is valid, POST /lecturers return 201"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers"
+      method: POST
+      headers:
+        Authorization: "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+        department_id: "{request_department_id}"
+        academic_title: "{request_academic_title}"
+        position: "{request_position}"
+        status: "{request_status}"
+    response:
+      status_code: 201
+      json:
+        id: !anyint
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: !anything
+        email: "{request_email}"
+        user_status: !anystr
+        department_name: !anystr
+        academic_title: "{request_academic_title}"
+        position: "{request_position}"
+        status: "{request_status}"
+      save:
+        json:
+          returned_id: id
+          returned_user_status: user_status
+
+  - name: "When a request with a valid json body,
+            PUT /lecturers/id returns 200 and a json body that matches request"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{returned_id}"
+      method: PUT
+      headers:
+        Authorization : "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{update_last_name}"
+        first_name: "{update_first_name}"
+        middle_name: "{update_middle_name}"
+        email: "{update_email}"
+        department_id: "{update_department_id}"
+        academic_title: "{update_academic_title}"
+        position: "{update_position}"
+        status: "{update_status}"
+    response:
+      status_code: 200
+      json:
+        id: !anyint
+        last_name: "{update_last_name}"
+        first_name: "{update_first_name}"
+        middle_name: !anything
+        email: "{update_email}"
+        user_status: "{returned_user_status}"
+        department_name: !anystr
+        academic_title: "{update_academic_title}"
+        position: "{update_position}"
+        status: "{update_status}"
+      save:
+        returned_user_status: user_status
+
+  - name: "When request is made,
+            GET /lecturers/id returns 200 and a json body that matches updated lecturer"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{returned_id}"
+      method: GET
+      headers:
+        Authorization : "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 200
+      json:
+        id: !int "{returned_id:d}"
+        last_name: "{update_last_name}"
+        first_name: "{update_first_name}"
+        middle_name: !anything
+        email: "{update_email}"
+        user_status: "{returned_user_status}"
+        department_name: !anystr
+        academic_title: "{update_academic_title}"
+        position: "{update_position}"
+        status: "{update_status}"
+
+finally:
+  - *delete_lecturer
+
+  - *delete_lecturer_check
+
+---
+
+test_name: When request without json body, PUT/lecturers/id returns 400
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - request_department_id
+        - request_academic_title
+        - request_position
+        - request_status
+      vals:
+        - [ "Doe", "John", "", "john.doe@example.com", 101, "DOCTOR_OF_PHILOSOPHY", "ASSISTANT", "ACTIVE" ]
+
+stages:
+  - *create_lecturer_save_id
+
+  - name: "When request without json body, PUT/lecturers/id returns 400"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{returned_id}"
+      method: PUT
+      headers:
+        Authorization : "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+    response:
+      status_code: 400
+
+finally:
+  - *delete_lecturer
+
+  - *delete_lecturer_check
+---
+
+test_name: When lecturer deleted, GET /lecturers/{id} returns 404
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - request_department_id
+        - request_academic_title
+        - request_position
+        - request_status
+      vals:
+        - [ "Doe", "John", "", "john.doe@example.com", 101, "DOCTOR_OF_PHILOSOPHY", "ASSISTANT", "ACTIVE" ]
+
+stages:
+  - *create_lecturer_save_id
+
+finally:
+  - *delete_lecturer
+
+  - *delete_lecturer_check
+
+---
+
+test_name: When lecturer not exists, PUT /lecturers/id returns 404
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - request_department_id
+        - request_academic_title
+        - request_position
+        - request_status
+      vals:
+        - [ "Doe", "John", "", "john.doe@example.com", 101, "DOCTOR_OF_PHILOSOPHY", "ASSISTANT", "ACTIVE" ]
+
+stages:
+  - *create_lecturer_save_id
+
+finally:
+  - *delete_lecturer
+
+  - name: "When lecturer not exists, PUT /lecturers/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{returned_id}"
+      method: PUT
+      headers:
+        Authorization : "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+        department_id: "{request_department_id}"
+        academic_title: "{request_academic_title}"
+        position: "{request_position}"
+        status: "{request_status}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When lecturer deleted, DELETE /lecturers/{id} returns 404
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - request_department_id
+        - request_academic_title
+        - request_position
+        - request_status
+      vals:
+        - [ "Doe", "John", "", "john.doe@example.com", 101, "DOCTOR_OF_PHILOSOPHY", "ASSISTANT", "ACTIVE" ]
+
+stages:
+  - *create_lecturer_save_id
+
+finally:
+  - *delete_lecturer
+
+  - name: "When lecturer not exists, DELETE /lecturers/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization : "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from lecturer what not exist, GET /lecturers/{id} returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - [ -1 ]
+
+stages:
+  - name: "When id from lecturer what not exist, GET /lecturers/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{wrong_id}"
+      method: GET
+      headers:
+        Authorization : "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from lecturer what not exist, PUT /lecturers/{id} returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+        - update_last_name
+        - update_first_name
+        - update_middle_name
+        - update_email
+        - update_department_id
+        - update_academic_title
+        - update_position
+        - update_status
+      vals:
+        - [ -1, "Smith", "Alice", "", "alice.smith@example.com", 101, "DOCTOR_OF_SCIENCE", "PROFESSOR", "ACTIVE"]
+
+stages:
+  - name: "When id from lecturer what not exist, PUT /lecturers/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{wrong_id}"
+      method: PUT
+      headers:
+        Authorization : "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{update_last_name}"
+        first_name: "{update_first_name}"
+        middle_name: "{update_middle_name}"
+        email: "{update_email}"
+        department_id: "{update_department_id}"
+        academic_title: "{update_academic_title}"
+        position: "{update_position}"
+        status: "{update_status}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When id from lecturer what not exist, DELETE /lecturers/{id} returns 404
+
+marks:
+  - parametrize:
+      key:
+        - wrong_id
+      vals:
+        - [ -1 ]
+
+stages:
+  - name: "When id from lecturer what not exist, DELETE /lecturers/id returns 404"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{wrong_id}"
+      method: DELETE
+      headers:
+        Authorization : "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+    response:
+      status_code: 404
+
+---
+
+test_name: When request with invalid security key header, GET /lecturers/id returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - request_department_id
+        - request_academic_title
+        - request_position
+        - request_status
+      vals:
+        - [ "satsgag", "Doe", "John", "", "john.doe@example.com", 101, "DOCTOR_OF_PHILOSOPHY", "ASSISTANT", "ACTIVE" ]
+
+stages:
+  - *create_lecturer_save_id
+
+  - name: "When request with invalid security key header, GET /lecturers/id returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{returned_id}"
+      method: GET
+      headers:
+        Authorization: "{wrong_token}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_lecturer
+
+  - *delete_lecturer_check
+
+---
+
+test_name: When request with invalid security key header, PUT /lecturers returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - request_department_id
+        - request_academic_title
+        - request_position
+        - request_status
+      vals:
+        - [ "satsgag", "Doe", "John", "", "john.doe@example.com", 101, "DOCTOR_OF_PHILOSOPHY", "ASSISTANT", "ACTIVE" ]
+
+stages:
+  - *create_lecturer_save_id
+
+  - name: "When request with invalid security key header, PUT /lecturers returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{returned_id}"
+      method: PUT
+      headers:
+        Authorization: "{wrong_token}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{request_last_name}"
+        first_name: "{request_first_name}"
+        middle_name: "{request_middle_name}"
+        email: "{request_email}"
+        department_id: "{request_department_id}"
+        academic_title: "{request_academic_title}"
+        position: "{request_position}"
+        status: "{request_status}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_lecturer
+
+  - *delete_lecturer_check
+
+---
+
+test_name: When request with invalid security key header, DELETE /lecturers returns 401
+
+marks:
+  - parametrize:
+      key:
+        - wrong_token
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - request_department_id
+        - request_academic_title
+        - request_position
+        - request_status
+      vals:
+        - [ "satsgag", "Doe", "John", "", "john.doe@example.com", 101, "DOCTOR_OF_PHILOSOPHY", "ASSISTANT", "ACTIVE" ]
+
+stages:
+  - *create_lecturer_save_id
+
+  - name: "When request with invalid security key header, DELETE /lecturers returns 401"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{returned_id}"
+      method: DELETE
+      headers:
+        Authorization: "{wrong_token}"
+    response:
+      status_code: 401
+
+finally:
+  - *delete_lecturer
+
+  - *delete_lecturer_check
+
+---
+
+test_name: When request with wrong json body data, PUT /lecturers/id returns 422
+
+marks:
+  - parametrize:
+      key:
+        - request_last_name
+        - request_first_name
+        - request_middle_name
+        - request_email
+        - request_department_id
+        - request_academic_title
+        - request_position
+        - request_status
+        - wrong_request_last_name
+        - wrong_request_first_name
+        - wrong_request_middle_name
+        - wrong_request_email
+        - wrong_request_department_id
+        - wrong_request_academic_title
+        - wrong_request_position
+        - wrong_request_status
+      vals:
+         - [ "Doe", "John", "", "john.doe@example.com", 101, "DOCTOR_OF_PHILOSOPHY", "ASSISTANT", "ACTIVE",
+             "Doe", "John", "", "john.doe@example.com", "agdgdg", "DOCTOR_OF_PHILOSOPHY", "ASSISTANT", "ACTIVE",]
+
+stages:
+  - *create_lecturer_save_id
+
+  - name: "When request with wrong json body data, PUT /lecturers/id returns 422"
+    request:
+      url: "{tavern.env_vars.BASE_URL}/lecturers/{returned_id}"
+      method: PUT
+      headers:
+        Authorization : "Bearer {tavern.env_vars.ACCESS_TOKEN}"
+        Content-Type: "application/json"
+      json:
+        last_name: "{wrong_request_last_name}"
+        first_name: "{wrong_request_first_name}"
+        middle_name: "{wrong_request_middle_name}"
+        email: "{wrong_request_email}"
+        department_id: "{wrong_request_department_id}"
+        academic_title: "{wrong_request_academic_title}"
+        position: "{wrong_request_position}"
+        status: "{wrong_request_status}"
+    response:
+      status_code: 422
+
+finally:
+  - *delete_lecturer
+
+  - *delete_lecturer_check
